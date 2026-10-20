@@ -11,6 +11,21 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0b5f4c">
+<style>
+/* কিতাবের ছবি-তৈরি (workflow) স্ট্যাটাস */
+.badge.bad{background:rgba(220,38,38,.14);color:var(--err)}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;cursor:pointer}
+.chk input{width:18px;height:18px;padding:0;flex:none}
+.runbox{display:flex;flex-direction:column;gap:6px;padding:9px 11px;border:1px dashed var(--line);border-radius:10px;background:var(--panel);font-size:12.5px;line-height:1.5}
+.runbox .rh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.runbox .rs{color:var(--muted);overflow-wrap:anywhere}
+.runbox a{color:var(--pri);font-weight:600;margin-left:auto}
+.pbar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.pbar>i{display:block;height:100%;width:0;background:var(--pri);border-radius:99px;transition:width .5s ease}
+.pbar.run>i{background-image:linear-gradient(90deg,rgba(255,255,255,0) 0,rgba(255,255,255,.35) 50%,rgba(255,255,255,0) 100%);background-size:60px 100%;background-repeat:repeat-x;animation:pshift 1.1s linear infinite}
+@keyframes pshift{to{background-position:60px 0}}
+@media (prefers-reduced-motion:reduce){.pbar.run>i{animation:none}}
+</style>
 </head>
 <body>
 <header class="top">
@@ -38,6 +53,7 @@
   <!-- BOOKS -->
   <section id="pBooks" hidden>
     <div class="row" style="margin-bottom:12px"><b style="flex:1">সব কিতাব</b>
+      <button id="bRel" class="sm" title="কিতাব ও ছবি-তৈরির স্ট্যাটাস রিফ্রেশ"><span data-ic="refresh"></span></button>
       <button id="bAdd" class="primary sm"><span data-ic="plus"></span>নতুন কিতাব</button></div>
     <div id="bList"></div>
   </section>
@@ -60,6 +76,9 @@
       <label class="f" for="sProofF">প্রুফড ফাইলের নাম</label><input id="sProofF" type="text" autocapitalize="off" placeholder="proofed.json">
       <label class="f" for="sProofD">প্রুফড ফোল্ডার</label><input id="sProofD" type="text" autocapitalize="off" placeholder="proofed">
       <label class="f" for="sTok">GitHub Token</label><input id="sTok" type="password" autocomplete="off" placeholder="github_pat_...">
+      <p class="hint">কিতাব থেকে ছবি তৈরির workflow চালাতে টোকেনে <b>Actions: Read and write</b> (classic হলে <b>workflow</b>) অনুমতিও লাগবে।</p>
+      <label class="f" for="sWf">ছবি তৈরির Workflow ফাইল (<code>.github/workflows/</code> এর ভেতরের নাম)</label><input id="sWf" type="text" autocapitalize="off" spellcheck="false" placeholder="ultimatepdftojpg(2).yml">
+      <p class="hint">এই ব্রাউজারে সংরক্ষিত হয় (বদলালেই সাথে সাথে)। ফাঁকা রাখলে <b>ultimatepdftojpg(2).yml</b> ব্যবহার হবে।</p>
       <b style="display:block;margin-top:22px">Gemini সেটিংস</b>
       <label class="f" for="sKey">Gemini API Key</label><input id="sKey" type="password" autocomplete="off" placeholder="AIza...">
       <label class="f" for="sMod">Model</label><input id="sMod" type="text" placeholder="gemini-3.5-flash-lite">
@@ -84,6 +103,9 @@
   <p class="hint" id="fDef"></p>
   <label class="f" for="fFold">রিপোর ফোল্ডার প্রিফিক্স</label><input id="fFold" type="text" autocapitalize="off" placeholder="যেমন: bukhari (ফাঁকা থাকলে কিতাবের নাম)">
   <p class="hint">ফোল্ডার হবে <b>প্রিফিক্স_pages</b>, <b>প্রিফিক্স_texts</b>, <b>প্রিফিক্স_proofed.json</b></p>
+  <label class="chk" for="fRun"><input id="fRun" type="checkbox"><span>সংরক্ষণের পর পিডিএফ থেকে ছবি তৈরির workflow চালান</span></label>
+  <label class="chk" for="fSplit"><input id="fSplit" type="checkbox" checked><span>প্রতিটি পেইজ বাম-ডান দুই ভাগ (split) করুন</span></label>
+  <p class="hint" id="fRunHint"></p>
   <div class="err" id="bdErr"></div>
   <div class="acts"><button id="bdCancel">বন্ধ</button><button id="bdSave" class="primary">সংরক্ষণ</button></div>
 </dialog>
@@ -116,6 +138,7 @@ const tabs={Users:'pUsers',Books:'pBooks',Set:'pSet'};
 Object.keys(tabs).forEach(k=>$('t'+k).onclick=()=>{
   Object.entries(tabs).forEach(([n,p])=>{$(p).hidden=n!==k;$('t'+n).classList.toggle('on',n===k);});
   if(k==='Set')loadSettings();
+  if(k==='Books')pollRuns();
 });
 
 /* ---------- USERS ---------- */
@@ -169,7 +192,7 @@ $('pdSet').onclick=async()=>{
 
 /* ---------- BOOKS ---------- */
 async function loadBooks(){
-  try{books=await App.sb.get('books?select=*&order=created_at.desc');renderBooks();}catch(e){toast(e.message,true);}
+  try{books=await App.sb.get('books?select=*&order=created_at.desc');renderBooks();pollRuns();}catch(e){toast(e.message,true);}
 }
 function renderBooks(){
   $('bList').innerHTML=books.length?books.map(b=>`<div class="li" data-id="${esc(b.id)}">
@@ -177,8 +200,10 @@ function renderBooks(){
       <div style="width:44px;height:58px;border-radius:6px;overflow:hidden;background:var(--panel2);flex:none;display:flex;align-items:center;justify-content:center;color:var(--muted)">${b.cover_url?`<img src="${esc(b.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover">`:App.ic('book')}</div>
       <div style="flex:1;min-width:0"><b>${esc(b.name)}</b><div class="meta">${esc(b.author||'')}<br>${esc(eff(b,'github_username'))}/${esc(eff(b,'repo_name'))}${(!b.github_username&&!b.repo_name)?' (ডিফল্ট)':''} &middot; ${esc((b.folder||b.name))}_${esc(S.pages_dir||DEF.pages_dir)}${b.pdf_url?'<br><a href="'+esc(b.pdf_url)+'" target="_blank" rel="noopener">PDF লিংক</a>':''}</div></div>
     </div>
-    <div class="row"><button class="sm" data-a="edit"><span data-ic="edit"></span>এডিট</button><button class="sm danger" data-a="del"><span data-ic="trash"></span>ডিলিট</button></div></div>`).join(''):'<div class="empty">কোনো কিতাব যোগ করা হয়নি</div>';
+    <div class="run" data-run="${esc(b.id)}"></div>
+    <div class="row"><button class="sm" data-a="edit"><span data-ic="edit"></span>এডিট</button>${b.pdf_url?'<button class="sm" data-a="run" title="পিডিএফ থেকে ছবি তৈরির workflow আবার চালান"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>ছবি তৈরি</button>':''}<button class="sm danger" data-a="del"><span data-ic="trash"></span>ডিলিট</button></div></div>`).join(''):'<div class="empty">কোনো কিতাব যোগ করা হয়নি</div>';
   App.hydrateIcons($('bList'));
+  updateRunUI();
 }
 let editId=null;
 function openBook(b){
@@ -187,26 +212,180 @@ function openBook(b){
   $('fName').value=v.name||'';$('fAuth').value=v.author||'';$('fCover').value=v.cover_url||'';$('fPdf').value=v.pdf_url||'';
   $('fGu').value=v.github_username||'';$('fRepo').value=v.repo_name||'';$('fBr').value=v.branch||'';$('fFold').value=v.folder||'';
   $('fGu').placeholder=eff({},'github_username');$('fRepo').placeholder=eff({},'repo_name');
+  $('fRun').checked=!b; $('fSplit').checked=getSplitPref(); updRunHint();
   $('fDef').textContent='ডিফল্ট: '+eff({},'github_username')+' / '+eff({},'repo_name')+' (সেটিংস ট্যাব থেকে বদলানো যায়)';
   $('bDlg').showModal();
 }
 $('bAdd').onclick=()=>openBook(null);$('bdCancel').onclick=()=>$('bDlg').close();
+$('bRel').onclick=async()=>{await loadBooks();toast('রিফ্রেশ হয়েছে');};
 $('bList').onclick=async e=>{
   const b=e.target.closest('button[data-a]');if(!b)return;
   const bk=books.find(x=>x.id===b.closest('.li').dataset.id);if(!bk)return;
   if(b.dataset.a==='edit')openBook(bk);
+  else if(b.dataset.a==='run'){
+    const sp=getSplitPref();
+    if(!confirm('"'+bk.name+'" — পিডিএফ থেকে আবার ছবি তৈরি করবেন?\n\nআউটপুট ফোল্ডার: '+outDirOf(bk)+'\nবাম-ডান ভাগ: '+(sp?'হ্যাঁ':'না')+'\n(একই নামের ছবি নতুন করে লেখা হবে; পুরনো ছবি মুছবে না)'))return;
+    await startRun(bk,sp);
+  }
   else if(confirm('"'+bk.name+'" কিতাবটি ডিলিট করবেন?')){
-    try{await App.sb.del('books?id=eq.'+enc(bk.id));toast('কিতাব ডিলিট হয়েছে');loadBooks();}catch(x){toast(x.message,true);}
+    try{await App.sb.del('books?id=eq.'+enc(bk.id));delete runsLS[bk.id];saveRunsLS();runState.delete(bk.id);toast('কিতাব ডিলিট হয়েছে');loadBooks();}catch(x){toast(x.message,true);}
   }
 };
+
+/* ---------- ছবি তৈরির workflow (GitHub Actions) ----------
+   নতুন কিতাবে নাম ও পিডিএফ লিংক দিয়ে সংরক্ষণ করলে workflow_dispatch দিয়ে নির্দিষ্ট workflow চলে।
+   ইনপুট অটো: source=download, download_url=পিডিএফ লিংক, output_dir=<প্রিফিক্স>_<pages>, split=টিক অনুযায়ী। */
+const WF_DEF='ultimatepdftojpg(2).yml', WK='kp_wf_file_v1', SK2='kp_split_pref_v1', RK='kp_bookrun_v1';
+const wfFile=()=>{let v='';try{v=(localStorage.getItem(WK)||'').trim();}catch(e){}return v||WF_DEF;};
+const getSplitPref=()=>{try{return localStorage.getItem(SK2)!=='0';}catch(e){return true;}};
+const setSplitPref=v=>{try{localStorage.setItem(SK2,v?'1':'0');}catch(e){}};
+let runsLS={};try{runsLS=JSON.parse(localStorage.getItem(RK)||'{}')||{};}catch(e){}
+const saveRunsLS=()=>{try{localStorage.setItem(RK,JSON.stringify(runsLS));}catch(e){}};
+const runState=new Map();                       // কিতাবের id → সর্বশেষ স্ট্যাটাস
+const sl=v=>(v||'').trim().replace(/^\/+|\/+$/g,'');
+const prefixOf=b=>sl(b.folder||b.name);
+const outDirOf=b=>prefixOf(b)+'_'+(S.pages_dir||DEF.pages_dir);
+const ghTok=()=>(S.github_token||'').trim();
+const pdfLinks=u=>(u||'').split(/[,\s]+/).filter(Boolean);
+function updRunHint(){
+  const nm=sl($('fFold').value)||sl($('fName').value);
+  $('fRunHint').textContent=nm?'আউটপুট ফোল্ডার: '+nm+'_'+(S.pages_dir||DEF.pages_dir)+' • workflow: '+wfFile():'workflow: '+wfFile();
+}
+['fFold','fName'].forEach(id=>$(id).addEventListener('input',updRunHint));
+
+async function gh(b,path,opt){
+  const repo=eff(b,'github_username')+'/'+eff(b,'repo_name');
+  return fetch('https://api.github.com/repos/'+repo+path,{cache:'no-store',...(opt||{}),headers:{
+    'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Authorization':'Bearer '+ghTok(),...((opt&&opt.headers)||{})}});
+}
+async function ghErr(r){
+  let m='';try{m=(await r.json()).message||'';}catch(e){}
+  const h={401:' (টোকেন ভুল বা মেয়াদ শেষ)',403:' (টোকেনে Actions: Read and write / workflow অনুমতি নেই)',404:' (রিপো বা workflow ফাইলের নাম ভুল, অথবা টোকেনের ওই রিপোতে অ্যাক্সেস নেই)',422:' (workflow-এ workflow_dispatch নেই বা ব্রাঞ্চ/ইনপুট ভুল)'}[r.status]||'';
+  return r.status+': '+m+h;
+}
+// workflow চালু করে; ফেরত: {id, at} (id না এলে পরে রানের তালিকা থেকে খুঁজে নেওয়া হবে)
+async function dispatchBook(b,split){
+  if(!ghTok())throw new Error('GitHub Token দেওয়া নেই — সেটিংস ট্যাবে টোকেন দিন');
+  const links=pdfLinks(b.pdf_url);
+  if(!links.length)throw new Error('পিডিএফ লিংক দিন');
+  if(links.length>1)throw new Error('একটি কিতাবে একটাই পিডিএফ লিংক দিন');
+  let ref=eff(b,'branch');
+  if(!ref){const ri=await gh(b,'');if(!ri.ok)throw new Error(await ghErr(ri));ref=(await ri.json()).default_branch||'main';}
+  const at=new Date().toISOString();
+  const r=await gh(b,'/actions/workflows/'+enc(wfFile())+'/dispatches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    ref,return_run_details:true,
+    inputs:{split:String(!!split),source:'download',folder_path:'pdf',pdf_file:'',download_url:links[0],output_dir:outDirOf(b),clean_output:'false',push_batch:'50'}})});
+  if(!r.ok)throw new Error(await ghErr(r));
+  let id=null;
+  try{
+    const j=await r.json();
+    id=j.workflow_run_id||j.run_id||null;
+    if(!id){const m=String(j.run_url||j.html_url||'').match(/runs\/(\d+)/);if(m)id=m[1];}
+  }catch(e){}                                    // 204 (বডি নেই) হলে id পরে খোঁজা হবে
+  return {id:id?String(id):null,at};
+}
+// দুই জায়গায় রাখা: এই ব্রাউজারে (সবসময়) + Supabase books-এর gh_run_id/gh_run_at কলামে (কলাম থাকলে; সব ডিভাইসে দেখাবে)
+function saveRun(b,info){
+  runsLS[b.id]=info;saveRunsLS();
+  App.sb.patch('books?id=eq.'+enc(b.id),{gh_run_id:info.id,gh_run_at:info.at}).then(()=>{if('gh_run_id' in b){b.gh_run_id=info.id;b.gh_run_at=info.at;}}).catch(()=>{});
+}
+function getRun(b){
+  const c=[];
+  if(b.gh_run_at)c.push({id:b.gh_run_id?String(b.gh_run_id):null,at:b.gh_run_at});
+  if(runsLS[b.id])c.push(runsLS[b.id]);
+  if(!c.length)return null;
+  c.sort((x,y)=>String(y.at).localeCompare(String(x.at)));
+  return c[0];
+}
+async function startRun(b,split){
+  try{
+    toast('workflow চালু করা হচ্ছে…');
+    const info=await dispatchBook(b,split);
+    saveRun(b,info);runState.set(b.id,{status:'queued'});updateRunUI();
+    toast('ছবি তৈরির workflow চালু হয়েছে — স্ট্যাটাস কিতাবের কার্ডে দেখা যাবে');
+    schedulePoll(3000);
+    return true;
+  }catch(e){toast('workflow চালু হয়নি: '+e.message,true);return false;}
+}
+async function fetchRunState(b,info){
+  let id=info.id;
+  if(!id){                                       // dispatch আইডি না দিলে: ওই সময়ের পরের সবচেয়ে পুরনো workflow_dispatch রান
+    const r=await gh(b,'/actions/workflows/'+enc(wfFile())+'/runs?event=workflow_dispatch&per_page=15');
+    if(!r.ok)throw new Error(await ghErr(r));
+    const t=new Date(info.at).getTime()-60000;
+    const cand=((await r.json()).workflow_runs||[]).filter(x=>new Date(x.created_at).getTime()>=t).sort((x,y)=>new Date(x.created_at)-new Date(y.created_at))[0];
+    if(!cand)return {status:'queued'};
+    id=String(cand.id);saveRun(b,{id,at:info.at});
+  }
+  const r=await gh(b,'/actions/runs/'+id);
+  if(!r.ok)throw new Error(await ghErr(r));
+  const run=await r.json(),st={status:run.status,conclusion:run.conclusion,url:run.html_url};
+  if(run.status!=='completed'){
+    try{
+      const rj=await gh(b,'/actions/runs/'+id+'/jobs');
+      if(rj.ok){
+        const steps=((await rj.json()).jobs||[]).flatMap(j=>j.steps||[]);
+        st.total=steps.length;st.done=steps.filter(x=>x.status==='completed').length;
+        const cur=steps.find(x=>x.status==='in_progress');st.step=cur?cur.name:'';
+      }
+    }catch(e){}
+  }
+  return st;
+}
+function runHtml(b){
+  const info=getRun(b);if(!info)return '';
+  const s=runState.get(b.id),link=s&&s.url?'<a href="'+esc(s.url)+'" target="_blank" rel="noopener">বিস্তারিত</a>':'';
+  if(!s)return '<div class="runbox"><div class="rh"><span class="badge">ছবি তৈরি</span><span class="rs">স্ট্যাটাস আনা হচ্ছে…</span></div></div>';
+  if(s.status==='error')return '<div class="runbox"><div class="rh"><span class="badge warn">ছবি তৈরি</span><span class="rs">স্ট্যাটাস আনা যায়নি: '+esc(s.err||'')+'</span></div></div>';
+  if(s.status==='completed'){
+    const ok=s.conclusion==='success',cn=s.conclusion==='cancelled';
+    return '<div class="runbox"><div class="rh"><span class="badge '+(ok?'ok':cn?'warn':'bad')+'">'+(ok?'ছবি তৈরি সম্পন্ন ✔':cn?'ছবি তৈরি বাতিল':'ছবি তৈরি ব্যর্থ ✖')+'</span>'+link+'</div></div>';
+  }
+  const q=s.status!=='in_progress',pct=s.total?Math.max(4,Math.round(s.done/s.total*100)):(q?0:4);
+  return '<div class="runbox"><div class="rh"><span class="badge warn">'+(q?'ছবি তৈরি: সারিতে আছে':'ছবি তৈরি চলছে…')+'</span>'+(s.total?'<span class="rs">ধাপ '+Math.min(s.done+1,s.total)+'/'+s.total+(s.step?' • '+esc(s.step):'')+'</span>':'')+link+'</div>'
+    +'<div class="pbar run"><i style="width:'+pct+'%"></i></div></div>';
+}
+function updateRunUI(){
+  document.querySelectorAll('#bList [data-run]').forEach(el=>{
+    const b=books.find(x=>String(x.id)===el.dataset.run);el.innerHTML=b?runHtml(b):'';
+  });
+}
+let pollT=0;
+const schedulePoll=ms=>{clearTimeout(pollT);pollT=setTimeout(pollRuns,ms||8000);};
+async function pollRuns(){
+  clearTimeout(pollT);
+  if(document.visibilityState!=='visible'||$('pBooks').hidden||!ghTok()){schedulePoll(8000);return;}
+  let active=false;
+  await Promise.all(books.map(async b=>{
+    const info=getRun(b);if(!info)return;
+    const old=runState.get(b.id);if(old&&old.status==='completed')return;       // শেষ হওয়া রান আর আনা হয় না
+    try{runState.set(b.id,await fetchRunState(b,info));}catch(e){runState.set(b.id,{status:'error',err:e.message});}
+    if(runState.get(b.id).status==='queued'||runState.get(b.id).status==='in_progress'||runState.get(b.id).status==='waiting'||runState.get(b.id).status==='pending')active=true;
+  }));
+  updateRunUI();
+  schedulePoll(active?8000:15000);
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!$('pBooks').hidden)pollRuns();});
+
 $('bdSave').onclick=async()=>{
   const row={name:$('fName').value.trim(),author:$('fAuth').value.trim(),cover_url:$('fCover').value.trim(),pdf_url:$('fPdf').value.trim(),
     github_username:$('fGu').value.trim(),repo_name:$('fRepo').value.trim(),branch:$('fBr').value.trim(),folder:$('fFold').value.trim().replace(/^\/+|\/+$/g,'')};
   if(!row.name){$('bdErr').textContent='কিতাবের নাম আবশ্যক';return;}
+  const wantRun=$('fRun').checked,split=$('fSplit').checked;
+  if(wantRun){                                   // সংরক্ষণের আগেই যাচাই, যাতে অর্ধেক কাজ না হয়
+    if(!row.pdf_url){$('bdErr').textContent='ছবি তৈরির জন্য পিডিএফ লিংক দিন';return;}
+    if(pdfLinks(row.pdf_url).length>1){$('bdErr').textContent='একটি কিতাবে একটাই পিডিএফ লিংক দিন';return;}
+    if(!ghTok()){$('bdErr').textContent='workflow চালাতে সেটিংস ট্যাবে GitHub Token দিন';return;}
+  }
+  setSplitPref(split);
+  let saved=null;
   try{
-    if(editId)await App.sb.patch('books?id=eq.'+enc(editId),row);else await App.sb.post('books',row);
-    $('bDlg').close();toast('কিতাব সংরক্ষিত হয়েছে');loadBooks();
-  }catch(x){$('bdErr').textContent=x.message;}
+    const r=editId?await App.sb.patch('books?id=eq.'+enc(editId),row):await App.sb.post('books',row);
+    saved=(r&&r[0])||{...row,id:editId};
+    $('bDlg').close();toast('কিতাব সংরক্ষিত হয়েছে');
+  }catch(x){$('bdErr').textContent=x.message;return;}
+  await loadBooks();
+  if(wantRun){const bk=books.find(x=>String(x.id)===String(saved.id))||saved;await startRun(bk,split);}
 };
 
 /* ---------- SETTINGS ---------- */
@@ -216,7 +395,7 @@ async function loadSettings(){
     $('sGu').value=r.github_username||DEF.github_username;$('sRepo').value=r.repo_name||DEF.repo_name;$('sBr').value=r.branch||'';
     $('sPages').value=r.pages_dir||DEF.pages_dir;$('sTexts').value=r.texts_dir||DEF.texts_dir;
     $('sProofF').value=r.proof_file||DEF.proof_file;$('sProofD').value=r.proof_dir||DEF.proof_dir;
-    $('sTok').value=r.github_token||'';$('sKey').value=r.gemini_api_key||'';$('sMod').value=r.gemini_model||'';
+    $('sWf').value=wfFile();$('sTok').value=r.github_token||'';$('sKey').value=r.gemini_api_key||'';$('sMod').value=r.gemini_model||'';
     $('sTmp').value=r.gemini_temp==null?'':r.gemini_temp;$('sP1').value=r.prompt_ocr||'';$('sP2').value=r.prompt_proof||'';
     showApi(r.api_enabled!==false);
   }catch(e){toast(e.message,true);}
@@ -239,6 +418,8 @@ $('sSave').onclick=async()=>{
     }else toast(e.message,true);
   }
 };
+
+$('sWf').addEventListener('input',()=>{try{const v=$('sWf').value.trim();if(v)localStorage.setItem(WK,v);else localStorage.removeItem(WK);}catch(e){}});
 
 /* ---------- API চালু/বন্ধ (টগল করলেই সাথে সাথে সংরক্ষণ) ---------- */
 function showApi(on){
