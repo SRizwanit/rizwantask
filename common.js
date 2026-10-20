@@ -1,7 +1,7 @@
 /* Shared client: Supabase REST, session, phone validation, PIN hashing, device id, UI helpers. */
 (function(){
-const SB_URL='https://azbleibkgerzaqbrrydl.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6YmxlaWJrZ2VyemFxYnJyeWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNzExNjYsImV4cCI6MjEwNDc0NzE2Nn0.6Q6PMcRJHXFIRPUZZf9lOjoTmq77_wbCoKc8tGkVF2o';
+const SB_URL='https://opluyjvhaibcznaidiod.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wbHV5anZoYWliY3puYWlkaW9kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjQ3ODcyMSwiZXhwIjoyMTA4MDU0NzIxfQ.3tCEEoIuyvrPt7a_9RNYzsjNwijAxA7ixQVLRpk-Blk';
 const ADMIN_PHONE='01714656443', ADMIN_WA='8801714656443';
 const SK='kp_session_v1', DK='kp_device_v1';
 const enc=encodeURIComponent;
