@@ -631,6 +631,14 @@ window.__KP_READY = (async () => {
   let textSet = new Set();    // যেসব পেইজের txt আছে
   let proofed = new Set();    // প্রুফড পেইজের stem
   let proofSha = null;
+  // ---------- ইউজার-ভিত্তিক প্রুফড মালিকানা (Supabase: page_proofs) ----------
+  // যে ইউজার একটি পেইজ প্রুফড করেছে, সেই পেইজ শুধু সে-ই (ও অ্যাডমিন) দেখতে পায়। অন্য ইউজারের কাছে পেইজটি
+  // ড্রপডাউন, আগে/পরে বাটন, নম্বরে যাও ও "পরের অপ্রুফড"-এ আসে না; অপ্রুফড পেইজগুলো সবার জন্য আগের মতোই খোলা।
+  const ME = CTX.uid, BOOK_ID = String(CTX.book.id), IS_ADMIN = !!CTX.isAdmin;
+  let owners = new Map();      // stem → যে ইউজার প্রুফড করেছে (user_id)
+  let ownerNames = new Map();  // user_id → নাম (শুধু অ্যাডমিনের জন্য)
+  let proofDb = true;          // page_proofs টেবিল আছে কি না (না থাকলে পুরনো আচরণ)
+  const encU = encodeURIComponent;
   let legacyProof = false;   // তালিকা পুরনো জায়গা (রুট) থেকে পড়া হয়েছে কি না
   let cur = -1, sha = null, orig = '';
   let seq = 0, busy = false, loadErr = false;
@@ -841,11 +849,26 @@ window.__KP_READY = (async () => {
   const flush = () => { stashDraft(); saveView(); };
 
   // ---------- UI আপডেট ----------
+  const hiddenStem = stem => !IS_ADMIN && proofDb && owners.has(stem) && owners.get(stem) !== ME;   // অন্য ইউজারের প্রুফড পেইজ
+  const isHid = i => i >= 0 && i < images.length && hiddenStem(images[i].stem);
+  const visIdx = () => { const o = []; for (let i = 0; i < images.length; i++) if (!isHid(i)) o.push(i); return o; };
+  function stepVis(from, dir) {        // from থেকে dir (+1/-1) দিকে প্রথম দৃশ্যমান পেইজ; না থাকলে -1
+    for (let i = from + dir; i >= 0 && i < images.length; i += dir) if (!isHid(i)) return i;
+    return -1;
+  }
+  const ownerTag = stem => {            // অ্যাডমিন অন্যের প্রুফড পেইজে নাম দেখে
+    if (!IS_ADMIN || !owners.has(stem) || owners.get(stem) === ME) return '';
+    const n = ownerNames.get(owners.get(stem));
+    return n ? ': ' + n : '';
+  };
   const label = im => im.stem
-    + (proofed.has(im.stem) ? ' (প্রুফড)' : '')
+    + (proofed.has(im.stem) ? ' (প্রুফড' + ownerTag(im.stem) + ')' : '')
     + (drafts[dk(im.stem)] ? ' •' : '')
     + (textSet.has(im.stem) ? '' : ' (txt নেই)');
-  function updateOption(i) { if (sel.options[i]) sel.options[i].textContent = label(images[i]); }
+  function updateOption(i) {
+    const o = Array.prototype.find.call(sel.options, x => x.value === String(i));
+    if (o) o.textContent = label(images[i]);
+  }
 
   function updateStatus() {
     const st = $('status');
@@ -853,11 +876,12 @@ window.__KP_READY = (async () => {
     else {
       const stem = images[cur].stem;
       const d = dirty();
-      let t = (cur + 1) + '/' + images.length;
+      const vis = visIdx();
+      let t = (vis.indexOf(cur) + 1) + '/' + vis.length;
       if (loadErr) t += ' • টেক্সট লোড ব্যর্থ (রিলোড চাপুন)';
       else if (ta.disabled) t += ' • লোড হচ্ছে…';
       else t += d ? ' • অসংরক্ষিত' : (sha ? ' • সেভড' : ' • টেক্সট নেই (পেস্ট করে সেভ করুন)');
-      if (proofed.has(stem)) t += ' • প্রুফড';
+      if (proofed.has(stem)) t += ' • প্রুফড' + ownerTag(stem);
       if (!apiEnabled) t += ' • এপি আই বন্ধ';
       if (apiRun) t += ' • ' + API_NAME[apiRun.n] + ' চলছে' + (apiRun.stem !== stem ? ' (' + apiRun.stem + ')' : '') + (apiRun.chars ? ' ' + apiRun.chars + ' অক্ষর' : '') + '…';
       st.textContent = t;
@@ -874,12 +898,13 @@ window.__KP_READY = (async () => {
     const keep = cur;
     sel.innerHTML = '';
     images.forEach((im, i) => {
+      if (isHid(i)) return;               // অন্য ইউজারের প্রুফড পেইজ তালিকায় আসে না
       const o = document.createElement('option');
       o.value = i;
       o.textContent = label(im);
       sel.appendChild(o);
     });
-    if (keep >= 0) sel.value = keep;
+    if (keep >= 0 && !isHid(keep)) sel.value = keep;
   }
   const applyZoom = () => { img.style.width = cfg.zoom + '%'; $('zVal').textContent = cfg.zoom + '%'; };
   const applyFont = () => document.documentElement.style.setProperty('--fs', cfg.fs + 'px');
@@ -1152,11 +1177,12 @@ window.__KP_READY = (async () => {
     }
     viewReady = true;
     maybeAutoOcr();                     // টেক্সট ফাঁকা হলে এপি আই - ১ নিজে থেকে চলবে
-    if (cur + 1 < images.length) getImage(images[cur + 1].name).catch(() => {}); // পরের ছবি আগাম লোড
+    { const nx = stepVis(cur, 1); if (nx >= 0) getImage(images[nx].name).catch(() => {}); } // পরের (দৃশ্যমান) ছবি আগাম লোড
   }
 
   async function go(i) {
     if (i < 0 || i >= images.length || i === cur) { sel.value = cur; return; }
+    if (isHid(i)) { toast('এই পেইজ অন্য ইউজার প্রুফড করেছেন — আপনি দেখতে পারবেন না', true); sel.value = cur; return; }
     if (busy) { toast('সেভ চলছে, একটু অপেক্ষা করুন'); sel.value = cur; return; }
     stopPlay();
     flush();  // বর্তমান পেইজের খসড়া লোকালে রেখে যাই (কোনো কিছু হারাবে না)
@@ -1174,7 +1200,9 @@ window.__KP_READY = (async () => {
     if (busy) return false;
     stashDraft();                       // নেটওয়ার্ক ব্যর্থ হলেও লোকালে লেখা থেকে যাবে
     busy = true; $('status').textContent = 'সেভ হচ্ছে…';
+    let blocked = false;
     try {
+      if (!(await ownerOk(images[cur].stem))) { blocked = true; return false; }   // অন্য ইউজার প্রুফড করে ফেললে সেভ হবে না
       const im = images[cur], text = ta.value;
       const body = {message: 'Proofread ' + im.stem + '.txt', content: toB64(text)};
       if (sha) body.sha = sha;
@@ -1192,35 +1220,131 @@ window.__KP_READY = (async () => {
       updateOption(cur); toast('সেভ হয়েছে (GitHub-এ পুশ)');
       return true;
     } catch (e) { toast('সেভ ব্যর্থ: ' + e.message + ' (লেখা খসড়ায় নিরাপদ আছে)', true); return false; }
-    finally { busy = false; updateStatus(); }
+    finally { busy = false; updateStatus(); if (blocked) applyProofs(); }
+  }
+
+  // ---- Supabase: page_proofs (book_id, stem, user_id) — একটি পেইজের মালিক একজনই (unique) ----
+  const isNoTable = e => /PGRST205|PGRST200|42P01|relation .*page_proofs|404/i.test((e && e.message) || '');
+  async function fetchProofRows() {
+    const rows = [], PAGE = 1000;
+    for (let off = 0; ; off += PAGE) {
+      const r = await App.sb.get('page_proofs?book_id=eq.' + encU(BOOK_ID) + '&select=stem,user_id&order=stem.asc&limit=' + PAGE + '&offset=' + off);
+      rows.push(...r);
+      if (r.length < PAGE) break;
+    }
+    return rows;
+  }
+  // সর্বশেষ মালিকানা আনে। ফেরত: true = হালনাগাদ হয়েছে, false = পারেনি (নেটওয়ার্ক), 'none' = টেবিল নেই
+  async function refreshProofs() {
+    let rows;
+    try { rows = await fetchProofRows(); }
+    catch (e) { if (isNoTable(e)) { proofDb = false; owners = new Map(); return 'none'; } return false; }
+    proofDb = true;
+    const m = new Map();
+    rows.forEach(r => { m.set(r.stem, r.user_id); proofed.add(r.stem); });
+    owners.forEach((_, stem) => { if (!m.has(stem)) proofed.delete(stem); });   // মালিক প্রুফড তুলে নিয়েছে
+    owners = m;
+    if (IS_ADMIN) {
+      try { (await App.sb.get('app_users?select=id,full_name')).forEach(u => ownerNames.set(String(u.id), u.full_name || '')); } catch (e) {}
+    }
+    return true;
+  }
+  function showNone() {                 // আপনার জন্য কোনো পেইজ নেই (সবই অন্যের প্রুফড)
+    ++seq; stopPlay(); cur = -1; viewReady = false;
+    ta.value = ''; ta.disabled = true; ta.placeholder = ''; orig = ''; sha = null;
+    img.removeAttribute('src');
+    setImgMsg('আপনার জন্য কোনো পেইজ বাকি নেই — সব পেইজ অন্য ইউজার প্রুফড করেছেন');
+    updateStatus();
+  }
+  // মালিকানা বদলালে: ড্রপডাউন নতুন করে সাজানো; খোলা পেইজ অন্যের হয়ে গেলে নিকটতম দৃশ্যমান পেইজে সরানো
+  function applyProofs() {
+    closeDD();
+    renderSelect();
+    if (cur >= 0 && isHid(cur)) {
+      const nx = stepVis(cur, 1) >= 0 ? stepVis(cur, 1) : stepVis(cur, -1);
+      toast('এই পেইজ অন্য ইউজার প্রুফড করেছেন — অন্য পেইজে নেওয়া হলো (আপনার অসংরক্ষিত লেখা খসড়ায় আছে)', true, 6000);
+      if (nx >= 0) go(nx); else showNone();
+    } else updateStatus();
+  }
+  // সেভ/প্রুফের আগে ওই পেইজ অন্য কেউ প্রুফড করেছে কি না তাজা তথ্যে যাচাই (নেটওয়ার্ক ব্যর্থ হলে আটকানো হয় না)
+  async function ownerOk(stem) {
+    if (!proofDb || IS_ADMIN) return true;
+    try {
+      const r = (await App.sb.get('page_proofs?book_id=eq.' + encU(BOOK_ID) + '&stem=eq.' + encU(stem) + '&select=user_id&limit=1'))[0];
+      if (r && r.user_id !== ME) {
+        owners.set(stem, r.user_id); proofed.add(stem);
+        toast('এই পেইজ অন্য ইউজার প্রুফড করেছেন — সেভ হয়নি (আপনার লেখা খসড়ায় নিরাপদ আছে)', true, 6000);
+        return false;
+      }
+    } catch (e) {}
+    return true;
+  }
+  // GitHub-এর প্রুফড তালিকায় (proofed.json) শুধু এই একটি পেইজ যোগ/বাদ — প্রতিবার তাজা ফাইল পড়ে, তাই অন্যের এন্ট্রি মোছে না
+  async function syncProofJson(stem, val) {
+    let lastErr = null;
+    for (let att = 0; att < 2; att++) {
+      const r0 = await api('/contents/' + epath(proofPath()) + refQ());
+      let set, sh = null;
+      if (r0.ok) {
+        const j = await r0.json(); sh = j.sha; set = new Set();
+        try { (JSON.parse(fromB64(j.content)).proofed || []).forEach(x => set.add(x)); } catch (e) {}
+      } else if (r0.status === 404) set = new Set(proofed);          // নতুন ফাইল: এখনকার জানা তালিকা থেকে শুরু
+      else throw new Error(await errMsg(r0));
+      if (val) set.add(stem); else set.delete(stem);
+      const body = {message: 'Proofing status: ' + stem, content: toB64(JSON.stringify({proofed: [...set].sort(natCmp)}, null, 2) + '\n')};
+      if (sh) body.sha = sh;
+      if (cfg.branch) body.branch = cfg.branch;
+      const r = await api('/contents/' + epath(proofPath()),
+                          {method: 'PUT', body: JSON.stringify(body), headers: {'Content-Type': 'application/json'}});
+      if (r.ok) {
+        proofSha = (await r.json()).content.sha;
+        if (legacyProof) {
+          legacyProof = false;
+          toast('প্রুফড তালিকা এখন ' + proofPath() + '-এ সংরক্ষিত — রিপোর রুটের পুরনো ' + legacyProofPath() + ' চাইলে মুছে ফেলতে পারেন', false, 7000);
+        }
+        return;
+      }
+      lastErr = new Error(await errMsg(r));
+      if (r.status !== 409 && r.status !== 422) break;               // শুধু sha-সংঘর্ষে আবার চেষ্টা
+    }
+    throw lastErr;
   }
 
   async function setProofed(stem, val) {
-    const had = proofed.has(stem);
-    if (val) proofed.add(stem); else proofed.delete(stem);
-    const data = JSON.stringify({proofed: [...proofed].sort(natCmp)}, null, 2) + '\n';
-    const body = {message: 'Proofing status: ' + stem, content: toB64(data)};
-    if (proofSha) body.sha = proofSha;
-    if (cfg.branch) body.branch = cfg.branch;
-    try {
-      const r = await api('/contents/' + epath(proofPath()),
-                          {method: 'PUT', body: JSON.stringify(body), headers: {'Content-Type': 'application/json'}});
-      if (!r.ok) throw new Error(await errMsg(r));
-      proofSha = (await r.json()).content.sha;
-      if (legacyProof) {
-        legacyProof = false;
-        toast('প্রুফড তালিকা এখন ' + proofPath() + '-এ সংরক্ষিত — রিপোর রুটের পুরনো ' + legacyProofPath() + ' চাইলে মুছে ফেলতে পারেন', false, 7000);
+    const refresh = () => { const i = images.findIndex(im => im.stem === stem); if (i >= 0) updateOption(i); updateStatus(); };
+    if (proofDb) {
+      try {
+        if (val) {
+          try { await App.sb.post('page_proofs', {book_id: BOOK_ID, stem, user_id: ME}); owners.set(stem, ME); }
+          catch (e) {
+            if (!/409|23505|duplicate/i.test(e.message)) throw e;
+            const r = (await App.sb.get('page_proofs?book_id=eq.' + encU(BOOK_ID) + '&stem=eq.' + encU(stem) + '&select=user_id&limit=1'))[0];
+            if (r) owners.set(stem, r.user_id);
+            if (r && r.user_id !== ME && !IS_ADMIN) {                 // অন্য ইউজার আগেই প্রুফড করে ফেলেছে
+              proofed.add(stem); applyProofs();
+              toast('এই পেইজ অন্য ইউজার আগেই প্রুফড করেছেন — আপনি এটি প্রুফড করতে পারবেন না', true, 6000);
+              return false;
+            }
+          }
+        } else {
+          await App.sb.del('page_proofs?book_id=eq.' + encU(BOOK_ID) + '&stem=eq.' + encU(stem) + (IS_ADMIN ? '' : '&user_id=eq.' + encU(ME)));
+          owners.delete(stem);
+        }
+      } catch (e) {
+        toast('প্রুফড তালিকা সেভ ব্যর্থ: ' + e.message, true);
+        refresh(); return false;
       }
-      const i = images.findIndex(im => im.stem === stem); if (i >= 0) updateOption(i);
-      updateStatus();
-      return true;
-    } catch (e) {
-      if (had) proofed.add(stem); else proofed.delete(stem);   // ব্যর্থ হলে আগের অবস্থায় ফেরত
-      toast('প্রুফড তালিকা সেভ ব্যর্থ: ' + e.message, true);
-      const i = images.findIndex(im => im.stem === stem); if (i >= 0) updateOption(i);
-      updateStatus();
-      return false;
     }
+    let jerr = null;
+    try { await syncProofJson(stem, val); } catch (e) { jerr = e; }
+    if (jerr && !proofDb) {                                            // পুরনো মোডে GitHub-ই একমাত্র সংরক্ষণ
+      toast('প্রুফড তালিকা সেভ ব্যর্থ: ' + jerr.message, true);
+      refresh(); return false;
+    }
+    if (val) proofed.add(stem); else proofed.delete(stem);
+    if (jerr) toast('প্রুফড চিহ্ন সংরক্ষিত হয়েছে, কিন্তু GitHub-এর প্রুফড ফাইল হালনাগাদ হয়নি: ' + jerr.message, true, 6000);
+    refresh();
+    return true;
   }
 
   // ---------- ইনিশিয়ালাইজ ----------
@@ -1282,9 +1406,14 @@ window.__KP_READY = (async () => {
       }
 
       images = imgs; textSet = ts; proofed = ps; proofSha = psha;
+      owners = new Map();
+      const pr = await refreshProofs();                            // কে কোন পেইজ প্রুফড করেছে (Supabase)
+      if (pr === false) throw new Error('প্রুফড মালিকানা আনা যায়নি (নেটওয়ার্ক) — রিলোড চাপুন');
+      if (pr === 'none') toast(IS_ADMIN ? 'Supabase-এ page_proofs টেবিল নেই — supabase_page_proofs.sql চালান; তার আগে ইউজার-ভিত্তিক লুকানো কাজ করবে না' : 'প্রুফড মালিকানা সক্রিয় নেই (অ্যাডমিনকে জানান)', true, 7000);
       cur = -1; renderSelect();
       let start = images.findIndex(im => im.stem === cfg.last);   // যেখানে ছিলেন সেখান থেকে শুরু
-      if (start < 0) start = 0;
+      if (start < 0 || isHid(start)) start = stepVis(-1, 1);       // নইলে প্রথম দৃশ্যমান পেইজ
+      if (start < 0) { showNone(); return; }
       restoreOnce = true;
       await go(start);
     } catch (e) {
@@ -1388,8 +1517,8 @@ window.__KP_READY = (async () => {
 
   // ---------- ইভেন্ট ----------
   $('btnReload').onclick = () => { imgCache.clear(); init(); };
-  $('btnPrev').onclick = () => go(cur - 1);
-  $('btnNext').onclick = () => go(cur + 1);
+  $('btnPrev').onclick = () => go(stepVis(cur, -1));      // অন্যের প্রুফড পেইজ বাদ দিয়ে আগের পেইজ
+  $('btnNext').onclick = () => go(stepVis(cur, 1));       // অন্যের প্রুফড পেইজ বাদ দিয়ে পরের পেইজ
   sel.onchange = () => go(parseInt(sel.value, 10));
   function jumpTo() {
     const n = parseInt($('jump').value, 10);
@@ -1397,6 +1526,7 @@ window.__KP_READY = (async () => {
     let i = images.findIndex(im => numOf(im.stem) === n);
     if (i < 0 && n >= 1 && n <= images.length) i = n - 1;
     if (i < 0) { toast('এই নম্বরের পেইজ নেই', true); return; }
+    if (isHid(i)) { toast('এই পেইজ অন্য ইউজার প্রুফড করেছেন — আপনি দেখতে পারবেন না', true); return; }
     go(i);
   }
   $('btnGo').onclick = jumpTo;
@@ -1404,7 +1534,7 @@ window.__KP_READY = (async () => {
   $('btnNextUn').onclick = () => {
     for (let k = 1; k <= images.length; k++) {
       const i = (cur + k) % images.length;
-      if (!proofed.has(images[i].stem)) { go(i); return; }
+      if (!isHid(i) && !proofed.has(images[i].stem)) { go(i); return; }
     }
     toast('সব পেইজ প্রুফড!');
   };
@@ -2133,7 +2263,7 @@ window.__KP_READY = (async () => {
     if (cur < 0 || ta.disabled || proofRunning) return;
     if (!sha && !ta.value.trim() && !confirm('এই পেইজে কোনো টেক্সট নেই। তবুও প্রুফড চিহ্নিত করবেন?')) return;
     proofRunning = true; $('btnProof').setAttribute('aria-busy', 'true');
-    const stem = images[cur].stem, isLast = cur + 1 >= images.length, needProof = !proofed.has(stem);
+    const stem = images[cur].stem, nxt = stepVis(cur, 1), isLast = nxt < 0, needProof = !proofed.has(stem);
     let k = 0;
     loadingStart(1 + (needProof ? 1 : 0) + (isLast ? 0 : 1));
     try {
@@ -2146,7 +2276,7 @@ window.__KP_READY = (async () => {
       }
       if (!isLast) {
         loadingStep(++k, 'পরের পেইজ লোড হচ্ছে…');
-        await go(cur + 1);
+        await go(nxt);
         loadingDone('সেভ ও প্রুফড হয়েছে • পরের পেইজ খোলা হয়েছে');
       } else loadingDone('শেষ পেইজ — সেভ ও প্রুফড হয়েছে');
     } finally {
@@ -2170,8 +2300,8 @@ window.__KP_READY = (async () => {
     if (e.key === 'Escape' && ddOpen) { e.preventDefault(); closeDD(); return; }
     if (e.key === 'Escape' && lb.classList.contains('open')) { e.preventDefault(); closeLightbox(); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveText(); }
-    else if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); go(cur + 1); }
-    else if (e.altKey && e.key === 'ArrowLeft')  { e.preventDefault(); go(cur - 1); }
+    else if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); go(stepVis(cur, 1)); }
+    else if (e.altKey && e.key === 'ArrowLeft')  { e.preventDefault(); go(stepVis(cur, -1)); }
   });
 
   // ব্রাউজার বন্ধ/ব্যাকগ্রাউন্ডে গেলে/ক্র্যাশের আগমুহূর্তে সবকিছু লোকালে রেখে দেওয়া
@@ -2489,6 +2619,10 @@ window.__KP_READY = (async () => {
   // অ্যাডমিনের এপি আই চালু/বন্ধ লাইভ ধরতে: ট্যাবে ফিরলে ও প্রতি ৩০ সেকেন্ডে সর্বশেষ অবস্থা দেখে নেয়
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshApiFlag(); });
   setInterval(() => { if (document.visibilityState === 'visible') refreshApiFlag(); }, 30000);
+  // অন্য ইউজারের নতুন প্রুফড পেইজ ধরতে: ট্যাবে ফিরলে ও প্রতি ৬০ সেকেন্ডে মালিকানা নতুন করে আনে
+  const syncProofs = async () => { if (initing || busy || !images.length) return; if (await refreshProofs() === true) applyProofs(); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncProofs(); });
+  setInterval(() => { if (document.visibilityState === 'visible') syncProofs(); }, 60000);
   if (!cfg.token && CTX.isAdmin) openSettings();   // অ্যাডমিন: টোকেন না থাকলে সেটিংস খুলবে; ইউজারের টোকেন Supabase থেকে আসে
   else init();
 })();
