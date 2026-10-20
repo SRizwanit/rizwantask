@@ -58,9 +58,13 @@
   footer button{padding:5px 9px}
   #jump{width:72px}
   /* স্ট্যাটাস: হেডারের নিচে পাতলা লাইনে (সবসময় দেখা যায়, খালি থাকলে লুকায়) */
-  #status{padding:2px 10px;font-size:11px;color:var(--muted);text-align:right;border-bottom:1px solid var(--line);background:var(--bg)}
-  #status:empty{display:none}
-  #status.dirty{color:var(--warn);font-weight:600}
+  #status{display:flex;align-items:center;gap:8px;padding:3px 8px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bg)}
+  #stText{flex:1;min-width:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #stText.dirty{color:var(--warn);font-weight:600}
+  /* ছবির টুল (ডাউনলোড / Lens / Ai): স্ট্যাটাস লাইনের বাম ফাঁকা জায়গায় */
+  #imgTools{display:flex;align-items:center;gap:6px;flex:none}
+  #imgTools button{padding:3px 9px;border-radius:9px}
+  #imgTools button .i{width:15px;height:15px}
 
   /* শোনার (TTS) বাটন: হেডিং টগলের পাশে, একটি গ্রুপে */
   #ttsBox{display:inline-flex;align-items:center;gap:6px;padding-left:8px;margin-left:2px;border-left:1px solid var(--line)}
@@ -259,16 +263,20 @@
   </span>
   <span id="apiBox"><button id="btnAutoApi" class="ico on" title="অটো OCR" aria-label="অটো OCR" aria-pressed="true"><svg class="i"><use href="#i-bolt"/></svg></button><button id="btnApi" class="ico" title="API — ছবি থেকে টেক্সট (এপি আই - ১) / টেক্সট প্রুফিং (এপি আই - ২)" aria-label="API"><svg class="i"><use href="#i-api"/></svg></button></span>
 </header>
-<div id="status"></div>
+<div id="status">
+  <span id="imgTools">
+    <button id="btnDl" class="ico" title="এই পেইজের মূল ছবি ডাউনলোড করুন" aria-label="ডাউনলোড"><svg class="i"><use href="#i-download"/></svg></button>
+    <button id="btnLens" class="ico" title="এই পেইজের ছবি Google Lens-এ খুলুন (টেক্সট কপি করার জন্য)" aria-label="Google Lens"><svg class="i"><use href="#i-lens"/></svg></button>
+    <button id="btnAiCopy" class="ico" title="AI প্রম্পট কপি — GitHub ডাউনলোড অংশ + এই পেইজের ছবির raw লিংক + OCR প্রম্পট (Supabase), একসাথে ক্লিপবোর্ডে" aria-label="AI প্রম্পট কপি"><svg class="i"><use href="#i-sparkle"/></svg></button>
+  </span>
+  <span id="stText"></span>
+</div>
 
 <main id="main">
   <section class="pane pane-img">
     <div class="bar">
       <span>ছবি</span>
       <button id="zOut">−</button><span id="zVal">100%</span><button id="zIn">+</button><button id="zFit">ফিট</button>
-      <button id="btnDl" class="ico" title="এই পেইজের মূল ছবি ডাউনলোড করুন" aria-label="ডাউনলোড"><svg class="i"><use href="#i-download"/></svg></button>
-      <button id="btnLens" class="ico" title="এই পেইজের ছবি Google Lens-এ খুলুন (টেক্সট কপি করার জন্য)" aria-label="Google Lens"><svg class="i"><use href="#i-lens"/></svg></button>
-      <button id="btnAiCopy" class="ico" title="AI প্রম্পট কপি — GitHub ডাউনলোড অংশ + এই পেইজের ছবির raw লিংক + OCR প্রম্পট (Supabase), একসাথে ক্লিপবোর্ডে" aria-label="AI প্রম্পট কপি"><svg class="i"><use href="#i-sparkle"/></svg></button>
     </div>
     <div class="body" id="imgBox">
       <img id="img" alt="" title="বড় করে দেখতে ক্লিক করুন">
@@ -871,7 +879,7 @@ window.__KP_READY = (async () => {
   }
 
   function updateStatus() {
-    const st = $('status');
+    const st = $('stText');
     if (cur < 0) { st.textContent = ''; st.className = ''; }
     else {
       const stem = images[cur].stem;
@@ -1199,7 +1207,7 @@ window.__KP_READY = (async () => {
     if (!dirty()) return true;
     if (busy) return false;
     stashDraft();                       // নেটওয়ার্ক ব্যর্থ হলেও লোকালে লেখা থেকে যাবে
-    busy = true; $('status').textContent = 'সেভ হচ্ছে…';
+    busy = true; $('stText').textContent = 'সেভ হচ্ছে…';
     let blocked = false;
     try {
       if (!(await ownerOk(images[cur].stem))) { blocked = true; return false; }   // অন্য ইউজার প্রুফড করে ফেললে সেভ হবে না
@@ -1353,7 +1361,7 @@ window.__KP_READY = (async () => {
     initing = true; initFailed = false;
     autoTried.clear();
     flush();
-    $('status').textContent = 'লোড হচ্ছে…';
+    $('stText').textContent = 'লোড হচ্ছে…';
     try {
       if (!cfg.token) toast('টোকেন নেই — শুধু দেখা যাবে, সেভ/পুশ হবে না (সেটিংস থেকে টোকেন দিন)', true, 4500);
 
@@ -1418,7 +1426,7 @@ window.__KP_READY = (async () => {
       await go(start);
     } catch (e) {
       initFailed = true;
-      $('status').textContent = '';
+      $('stText').textContent = '';
       toast('সংযোগ ব্যর্থ: ' + e.message, true);
       openSettings();
     } finally { initing = false; }
