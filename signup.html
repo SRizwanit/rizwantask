@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>প্রোফাইল তৈরি - কিতাব প্রুফিং</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><div class="logo" data-ic="user"></div><h1>প্রোফাইল তৈরি করুন</h1><p>কাজ শুরু করতে আপনার তথ্য দিন</p>
+    <span class="badge ok" id="verified" style="margin-top:6px"></span></div>
+  <div class="card">
+    <b>ইউজার ডিটেইলস</b>
+    <label class="f" for="name">পূর্ণ নাম *</label>
+    <input id="name" type="text" autocomplete="name" placeholder="আপনার নাম">
+    <label class="f">পেমেন্ট মাধ্যম *</label>
+    <div class="seg">
+      <label><input type="radio" name="pm" value="bkash" checked><span>বিকাশ</span></label>
+      <label><input type="radio" name="pm" value="nagad"><span>নগদ</span></label>
+    </div>
+    <label class="f" for="pnum" id="pnumLbl">বিকাশ নাম্বার *</label>
+    <input id="pnum" type="tel" inputmode="tel" placeholder="01XXXXXXXXX" maxlength="18">
+    <button id="bSubmit" class="primary block" style="margin-top:22px">প্রোফাইল সাবমিট করুন</button>
+    <div class="spin" id="spin"></div>
+    <div class="err" id="err"></div>
+  </div>
+  <p class="hint" style="text-align:center;margin-top:14px">আপনার তথ্য নিরাপদে সংরক্ষিত থাকবে</p>
+</div>
+<script src="common.js"></script>
+<script>
+(() => {
+const {$,Phone}=App;App.hydrateIcons();
+let ctx=null;try{ctx=JSON.parse(sessionStorage.getItem('kp_signup')||'null');}catch(e){}
+if(!ctx||!ctx.phone||!ctx.pin){location.replace('login.html');return;}
+$('verified').textContent='যাচাইকৃত নাম্বার: '+ctx.phone;
+const pm=()=>document.querySelector('input[name=pm]:checked').value;
+document.querySelectorAll('input[name=pm]').forEach(r=>r.onchange=()=>$('pnumLbl').textContent=(pm()==='bkash'?'বিকাশ':'নগদ')+' নাম্বার *');
+const err=m=>$('err').textContent=m||'';
+$('bSubmit').onclick=async()=>{
+  const name=$('name').value.trim(),v=Phone.validate($('pnum').value);
+  if(!name)return err('পূর্ণ নাম দিন');
+  if(!v.ok)return err((pm()==='bkash'?'বিকাশ':'নগদ')+' নাম্বার: '+v.msg);
+  $('bSubmit').disabled=true;$('spin').classList.add('on');err('');
+  try{
+    const dev=App.deviceId();
+    if(await App.findUserByDevice(dev))throw new Error('এই ডিভাইসে ইতিমধ্যে একটি একাউন্ট যুক্ত আছে। সাহায্যের জন্য অ্যাডমিনের সাথে যোগাযোগ করুন: '+App.ADMIN_PHONE);
+    const salt=App.newSalt(),hash=await App.hashPin(ctx.pin,salt);
+    const rows=await App.sb.post('app_users',{phone:ctx.phone,full_name:name,payment_method:pm(),payment_number:v.phone,password_salt:salt,password_hash:hash,device_id:dev});
+    sessionStorage.removeItem('kp_signup');
+    App.session.set(rows[0]);location.replace('task.html');
+  }catch(e){
+    err(/duplicate|23505/i.test(e.message)?'এই নাম্বার বা ডিভাইসে ইতিমধ্যে একাউন্ট আছে':e.message);
+    $('bSubmit').disabled=false;$('spin').classList.remove('on');
+  }
+};
+})();
+</script>
+</body>
+</html>

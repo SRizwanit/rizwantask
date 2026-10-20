@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>লগইন - কিতাব প্রুফিং</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><div class="logo" data-ic="book"></div><h1>কিতাব প্রুফিং</h1><p id="sub">মোবাইল নাম্বার দিয়ে লগইন করুন</p></div>
+  <div class="card">
+    <!-- STEP: phone -->
+    <section id="sPhone">
+      <label class="f" for="phone">ফোন নাম্বার</label>
+      <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="017XXXXXXXX" maxlength="18">
+      <button id="bPhone" class="primary block" style="margin-top:16px">পরবর্তী</button>
+    </section>
+    <!-- STEP: otp -->
+    <section id="sOtp" hidden>
+      <label class="f" for="otp">৬ ডিজিটের OTP কোড দিন</label>
+      <input id="otp" class="pin" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="------">
+      <button id="bOtp" class="primary block" style="margin-top:16px">ভেরিফাই করুন</button>
+      <button id="bResend" class="link" disabled>OTP আবার পাঠান</button>
+    </section>
+    <!-- STEP: pin -->
+    <section id="sPin" hidden>
+      <label class="f" id="pinLbl" for="pin">PIN দিন</label>
+      <input id="pin" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
+      <div id="pin2Box" hidden>
+        <label class="f" for="pin2">PIN আবার দিন</label>
+        <input id="pin2" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="----">
+      </div>
+      <button id="bPin" class="primary block" style="margin-top:16px">লগইন করুন</button>
+      <button id="bForgot" class="link">PIN ভুলে গেছেন? অ্যাডমিনকে WhatsApp করুন</button>
+    </section>
+    <!-- STEP: device blocked -->
+    <section id="sDev" hidden>
+      <p id="devMsg" style="line-height:1.7;margin:0;text-align:center"></p>
+      <button id="bRetry" class="block" style="margin-top:16px"></button>
+      <button id="bDevWa" class="primary block" style="margin-top:10px">অ্যাডমিনকে WhatsApp এ জানান</button>
+    </section>
+    <div class="spin" id="spin"></div>
+    <div class="err" id="err"></div>
+    <button id="bChange" class="link mut" hidden>অন্য নাম্বার ব্যবহার করবেন?</button>
+  </div>
+  <p class="hint" style="text-align:center;margin-top:16px">নতুন ইউজার? OTP ভেরিফাই করার পর প্রোফাইল তৈরি করুন</p>
+</div>
+
+<dialog id="otpDlg">
+  <h3>আপনার OTP কোড</h3>
+  <div id="otpShow" class="pin" style="font-size:32px;color:var(--pri);margin:14px 0 6px"></div>
+  <p class="hint" style="text-align:center;margin:0">২ মিনিটের মধ্যে কোডটি লিখুন</p>
+  <div class="acts"><button class="primary" id="otpOk">ঠিক আছে</button></div>
+</dialog>
+
+<script src="common.js"></script>
+<script>
+(() => {
+const {$,Phone,toast}=App;
+App.hydrateIcons();
+// Already signed in on this device -> straight to tasks
+if(App.session.get()) App.requireAuth().then(()=>location.replace('task.html'));
+
+let phone='',user=null,mode='LOGIN',blockReason='BOUND',resendT=0;
+const steps=['sPhone','sOtp','sPin','sDev'];
+const show=id=>{steps.forEach(s=>$(s).hidden=s!==id);$('bChange').hidden=id==='sPhone';$('err').textContent='';};
+const err=m=>$('err').textContent=m||'';
+const busy=on=>{$('spin').classList.toggle('on',on);['bPhone','bOtp','bPin','bRetry','bDevWa'].forEach(i=>$(i).disabled=on);};
+const digits=e=>e.target.value=e.target.value.replace(/\D/g,'');
+['otp','pin','pin2'].forEach(i=>$(i).addEventListener('input',digits));
+[['phone','bPhone'],['otp','bOtp'],['pin','bPin'],['pin2','bPin']].forEach(([i,b])=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')$(b).click();}));
+
+function pinStep(m){
+  mode=m;show('sPin');$('pin').value='';$('pin2').value='';
+  const setup=m!=='LOGIN';$('pin2Box').hidden=!setup;$('bForgot').hidden=setup;
+  $('pinLbl').textContent=m==='LOGIN'?'৪ ডিজিটের PIN দিন':m==='SETUP_EXISTING'?'আপনার অ্যাকাউন্টের জন্য নতুন ৪ ডিজিটের PIN সেট করুন':'আপনার নতুন একাউন্টের জন্য ৪ ডিজিটের PIN সেট করুন';
+  $('bPin').textContent=m==='LOGIN'?'লগইন করুন':m==='SETUP_EXISTING'?'PIN সেট করুন':'পরবর্তী ধাপ';
+  $('pin').focus();
+}
+function devStep(reason){
+  blockReason=reason;show('sDev');
+  $('devMsg').textContent=reason==='BOUND'
+    ?'এই একাউন্টটি অন্য একটি ডিভাইসে যুক্ত আছে। অ্যাডমিন ডিভাইস রিসেট করে দিলে নিচের \u2018আবার চেষ্টা করুন\u2019 বাটনে চাপ দিন।'
+    :'এই মোবাইলে ইতিমধ্যে অন্য একটি একাউন্ট ব্যবহার করা হচ্ছে। একটি ডিভাইসে একটি মাত্র একাউন্ট চালানো যায়।';
+  $('bRetry').textContent='আবার চেষ্টা করুন';
+}
+const afterUserKnown=u=>{ // user exists: decide pin vs device block
+  const dev=App.deviceId(),stored=u.device_id;
+  if(!App.deviceEmpty(stored)&&stored!==dev) return devStep('BOUND');
+  pinStep(App.hasPin(u)?'LOGIN':'SETUP_EXISTING');
+};
+
+$('bPhone').onclick=async()=>{
+  const v=Phone.validate($('phone').value);if(!v.ok)return err(v.msg);
+  phone=v.phone;busy(true);err('');
+  try{
+    user=await App.findUserByPhone(phone);
+    if(user)afterUserKnown(user);else await startOtp();
+  }catch(e){err(e.message);}finally{busy(false);}
+};
+async function startOtp(){
+  const code=await App.requestOtp(phone);
+  show('sOtp');$('otp').value='';$('otp').focus();
+  $('otpShow').textContent=code;$('otpDlg').showModal();startResend();
+}
+function startResend(){
+  let s=120;const b=$('bResend');b.disabled=true;clearInterval(resendT);
+  const tick=()=>{b.textContent='OTP আবার পাঠান ('+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+')';
+    if(s--<=0){clearInterval(resendT);b.disabled=false;b.textContent='OTP আবার পাঠান';}};
+  tick();resendT=setInterval(tick,1000);
+}
+$('otpOk').onclick=()=>$('otpDlg').close();
+$('bResend').onclick=async()=>{busy(true);try{await startOtp();}catch(e){err(e.message);}finally{busy(false);}};
+$('bOtp').onclick=async()=>{
+  const c=$('otp').value.trim();if(c.length!==6)return err('৬ ডিজিটের কোড দিন');
+  busy(true);err('');
+  try{
+    if(!(await App.verifyOtp(phone,c)))return err('দয়া করে সঠিক ওটিপি লিখুন');
+    if(await App.findUserByDevice(App.deviceId()))return devStep('USED');
+    pinStep('SETUP_NEW');
+  }catch(e){err(e.message);}finally{busy(false);}
+};
+function finish(u){App.session.set(u);location.replace('task.html');}
+$('bPin').onclick=async()=>{
+  const pin=$('pin').value;if(pin.length!==4)return err('৪ ডিজিটের PIN দিন');
+  if(mode!=='LOGIN'&&pin!==$('pin2').value)return err('দুটি PIN মিলছে না');
+  busy(true);err('');const dev=App.deviceId();
+  try{
+    if(mode==='LOGIN'){
+      if(!(await App.verifyPin(user,pin))){$('pin').value='';return err('PIN সঠিক নয়');}
+      if(App.deviceEmpty(user.device_id)){
+        if(await App.findUserByDevice(dev,user.id))return devStep('USED');
+        await App.sb.patch('app_users?id=eq.'+encodeURIComponent(user.id),{device_id:dev});
+        user.device_id=dev;
+      }
+      finish(user);
+    }else if(mode==='SETUP_EXISTING'){
+      if(await App.findUserByDevice(dev,user.id))return devStep('USED');
+      const salt=App.newSalt(),hash=await App.hashPin(pin,salt);
+      await App.sb.patch('app_users?id=eq.'+encodeURIComponent(user.id),{password_salt:salt,password_hash:hash,device_id:dev});
+      user.device_id=dev;finish(user);
+    }else{
+      sessionStorage.setItem('kp_signup',JSON.stringify({phone,pin}));
+      location.href='signup.html';
+    }
+  }catch(e){err(e.message);}finally{busy(false);}
+};
+$('bRetry').onclick=async()=>{
+  busy(true);err('');
+  try{
+    if(blockReason==='BOUND'){
+      user=await App.findUserByPhone(phone);if(!user)return err('একাউন্ট খুঁজে পাওয়া যায়নি');
+      const st=user.device_id,dev=App.deviceId();
+      if(App.deviceEmpty(st)||st===dev){toast('ডিভাইস মিলেছে, এখন লগইন করুন');pinStep(App.hasPin(user)?'LOGIN':'SETUP_EXISTING');}
+      else err('এখনো অ্যাডমিন ডিভাইস রিসেট করেননি, একটু পর আবার চেষ্টা করুন');
+    }else{
+      if(await App.findUserByDevice(App.deviceId()))err('এই ডিভাইসে এখনো অন্য একাউন্ট বাঁধা আছে');
+      else{toast('ডিভাইস এখন খালি আছে');if(user)pinStep(App.hasPin(user)?'LOGIN':'SETUP_EXISTING');else pinStep('SETUP_NEW');}
+    }
+  }catch(e){err(e.message);}finally{busy(false);}
+};
+const wa=m=>window.open('https://wa.me/'+App.ADMIN_WA+'?text='+encodeURIComponent(m),'_blank');
+$('bForgot').onclick=()=>wa('আসসালামু আলাইকুম, আমি কিতাব প্রুফিং অ্যাপে আমার PIN ভুলে গিয়েছি। আমার ফোন নাম্বার: '+phone+'। দয়া করে সাহায্য করুন।');
+$('bDevWa').onclick=()=>wa('আসসালামু আলাইকুম, আমি কিতাব প্রুফিং অ্যাপে অন্য একটি ডিভাইস ব্যবহার করতে চাই। আমার ফোন নাম্বার: '+phone+'। দয়া করে আমার একাউন্টের ডিভাইস রিসেট করে দিন।');
+$('bChange').onclick=()=>{clearInterval(resendT);phone='';user=null;$('phone').value='';show('sPhone');$('phone').focus();};
+})();
+</script>
+</body>
+</html>

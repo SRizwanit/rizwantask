@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>কাজ - কিতাব প্রুফিং</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<header class="top">
+  <span class="logo-sm" data-ic="book"></span>
+  <h2 id="ttl">কাজের তালিকা</h2>
+  <button id="bAdmin" class="sm" hidden><span data-ic="shield"></span>অ্যাডমিন</button>
+  <button id="bOut" class="sm" hidden><span data-ic="logout"></span>লগআউট</button>
+</header>
+
+<main class="wrap wide" style="padding-bottom:90px">
+  <!-- TASK pane -->
+  <section id="pTask">
+    <div class="row" style="margin-bottom:14px">
+      <div style="position:relative;flex:1;min-width:200px">
+        <input id="q" type="search" placeholder="কিতাব বা লেখকের নাম খুঁজুন" style="padding-left:36px">
+        <span data-ic="search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);display:flex"></span>
+      </div>
+      <button id="bReload" class="sm" title="রিফ্রেশ"><span data-ic="refresh"></span></button>
+    </div>
+    <div class="spin on" id="spin"></div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>কোনো কিতাব পাওয়া যায়নি</div>
+  </section>
+
+  <!-- PROFILE pane -->
+  <section id="pProf" hidden style="max-width:440px;margin:0 auto">
+    <div class="card" style="text-align:center">
+      <div class="av" id="av"></div>
+      <h3 id="pName" style="margin:0 0 4px"></h3>
+      <span class="badge" id="pRole">ইউজার</span>
+      <div style="text-align:left;margin-top:16px">
+        <div class="kv"><span>মোবাইল নাম্বার</span><b id="pPhone"></b></div>
+        <div class="kv"><span id="pPmL">বিকাশ নাম্বার</span><b id="pPm"></b></div>
+        <div class="kv"><span>যোগ দিয়েছেন</span><b id="pDate"></b></div>
+      </div>
+      <button id="bEdit" class="block" style="margin-top:16px"><span data-ic="edit"></span>পেমেন্ট নাম্বার পরিবর্তন</button>
+      <button id="bOut2" class="danger block" style="margin-top:10px"><span data-ic="logout"></span>লগআউট</button>
+    </div>
+  </section>
+</main>
+
+<nav class="bottom" id="nav" hidden>
+  <button id="nTask" class="on"><span data-ic="tasks" data-cls="lg"></span>টাস্ক</button>
+  <button id="nProf"><span data-ic="user" data-cls="lg"></span>প্রোফাইল</button>
+</nav>
+
+<dialog id="dlg">
+  <h3>পেমেন্ট নাম্বার</h3>
+  <label class="f">মাধ্যম</label>
+  <div class="seg">
+    <label><input type="radio" name="pm" value="bkash"><span>বিকাশ</span></label>
+    <label><input type="radio" name="pm" value="nagad"><span>নগদ</span></label>
+  </div>
+  <label class="f" for="pn">নাম্বার</label>
+  <input id="pn" type="tel" inputmode="tel" maxlength="18">
+  <div class="err" id="dErr"></div>
+  <div class="acts"><button id="dCancel">বন্ধ</button><button id="dSave" class="primary">সংরক্ষণ</button></div>
+</dialog>
+
+<style>.logo-sm{display:flex;width:30px;height:30px;border-radius:9px;background:var(--pri);color:var(--pri-fg);align-items:center;justify-content:center}.logo-sm .i{width:18px;height:18px}</style>
+<script src="common.js"></script>
+<script>
+(async () => {
+const {$,esc,toast,Phone}=App;
+let me=await App.requireAuth(), isAdmin=App.isAdminPhone(me.phone), books=[];
+const PM={bkash:'বিকাশ',nagad:'নগদ'};
+
+// Admin: top field to reach admin.html. User: bottom navigation (task / profile).
+$('bOut').onclick=$('bOut2').onclick=()=>App.logout();
+if(isAdmin){ $('bAdmin').hidden=false; $('bOut').hidden=false; $('bAdmin').onclick=()=>location.href='admin.html'; $('pRole').textContent='অ্যাডমিন'; }
+else { $('nav').hidden=false; }
+App.hydrateIcons();
+
+function tab(t){
+  $('pTask').hidden=t!=='task'; $('pProf').hidden=t!=='prof';
+  $('nTask').classList.toggle('on',t==='task'); $('nProf').classList.toggle('on',t==='prof');
+  $('ttl').textContent=t==='task'?'কাজের তালিকা':'প্রোফাইল';
+}
+$('nTask').onclick=()=>tab('task'); $('nProf').onclick=()=>tab('prof');
+
+function renderProfile(){
+  $('av').textContent=(me.full_name||'?').trim().charAt(0).toUpperCase();
+  $('pName').textContent=me.full_name; $('pPhone').textContent=me.phone;
+  $('pPmL').textContent=(PM[me.payment_method]||'পেমেন্ট')+' নাম্বার'; $('pPm').textContent=me.payment_number||'-';
+  $('pDate').textContent=me.created_at?new Date(me.created_at).toLocaleDateString('bn-BD'):'-';
+}
+renderProfile();
+
+function renderBooks(){
+  const q=$('q').value.trim().toLowerCase();
+  const list=books.filter(b=>!q||(b.name||'').toLowerCase().includes(q)||(b.author||'').toLowerCase().includes(q));
+  $('empty').hidden=list.length>0;
+  $('grid').innerHTML=list.map(b=>`<button class="book" data-id="${esc(b.id)}">
+    <div class="cv">${b.cover_url?`<img src="${esc(b.cover_url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{innerHTML:App.ic('book')}))">`:App.ic('book')}</div>
+    <div class="bt"><b>${esc(b.name)}</b><small>${esc(b.author||'')}</small></div></button>`).join('');
+}
+$('grid').onclick=e=>{const b=e.target.closest('.book');if(b)location.href='view.html?book='+encodeURIComponent(b.dataset.id);};
+$('q').oninput=renderBooks;
+
+async function load(){
+  $('spin').classList.add('on');
+  try{ books=await App.sb.get('books?select=*&order=created_at.desc'); renderBooks(); }
+  catch(e){ toast('কিতাব লোড হয়নি: '+e.message,true); }
+  finally{ $('spin').classList.remove('on'); }
+}
+$('bReload').onclick=load; load();
+
+// edit payment number
+$('bEdit').onclick=()=>{
+  document.querySelector('#dlg input[value='+(me.payment_method||'bkash')+']').checked=true;
+  $('pn').value=me.payment_number||''; $('dErr').textContent=''; $('dlg').showModal();
+};
+$('dCancel').onclick=()=>$('dlg').close();
+$('dSave').onclick=async()=>{
+  const v=Phone.validate($('pn').value); if(!v.ok){$('dErr').textContent=v.msg;return;}
+  const m=document.querySelector('#dlg input[name=pm]:checked').value;
+  try{
+    const r=await App.sb.patch('app_users?id=eq.'+encodeURIComponent(me.id),{payment_method:m,payment_number:v.phone});
+    me=r[0]||{...me,payment_method:m,payment_number:v.phone}; renderProfile(); $('dlg').close(); toast('সংরক্ষিত হয়েছে');
+  }catch(e){$('dErr').textContent=e.message;}
+};
+})();
+</script>
+</body>
+</html>
