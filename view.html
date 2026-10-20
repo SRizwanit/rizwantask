@@ -133,6 +133,28 @@
   .apiPick{width:100%;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;padding:12px 14px;margin-top:8px;text-align:left;white-space:normal}
   .apiPick b{font-size:15px}
   .apiPick .s{font-size:12px;color:var(--muted);line-height:1.5}
+  /* শোনার সার্ভিস বাছাই ডায়ালগ */
+  #dlgTts{max-width:520px}
+  #tsErr[hidden]{display:none}
+  .tsItem{border:1px solid var(--line);border-radius:12px;margin-top:8px;background:var(--panel);overflow:hidden}
+  .tsItem.sel{border-color:var(--pri);box-shadow:0 0 0 1px var(--pri) inset}
+  .tsPick{width:100%;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;padding:11px 13px;text-align:left;white-space:normal;
+          background:transparent;border:0;border-radius:0}
+  .tsPick:hover{background:var(--panel2)}
+  .tsPick b{font-size:15px;display:flex;align-items:center;gap:8px}
+  .tsPick .s{font-size:12px;color:var(--muted);line-height:1.5}
+  .tsDot{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);display:inline-block}
+  .tsItem.sel .tsDot{border-color:var(--pri);background:radial-gradient(circle,var(--pri) 0 4px,transparent 5px)}
+  .tsTags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+  .tsTag{font-size:11px;padding:1px 8px;border-radius:99px;background:var(--panel2);color:var(--muted);line-height:1.6}
+  .tsTag.ok{background:rgba(22,163,74,.16);color:var(--ok)}
+  .tsTag.warn{background:rgba(194,65,12,.14);color:var(--warn)}
+  .tsTag.err{background:rgba(220,38,38,.14);color:var(--err)}
+  .tsPanel{display:none;padding:2px 13px 12px;border-top:1px dashed var(--line)}
+  .tsItem.sel .tsPanel{display:block}
+  .tsPanel:empty{display:none!important}
+  /* বোতামের সারি নিচে আটকে থাকে: লম্বা তালিকায় স্ক্রল না করেই "শুনুন" চাপা যায় */
+  #dlgTts .row{position:sticky;bottom:-18px;background:var(--bg);padding:10px 0 2px;margin:10px 0 -2px;border-top:1px solid var(--line);z-index:2}
   #toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:10px;
          font-size:13px;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
   #toast.show{opacity:1}
@@ -213,7 +235,7 @@
   <button id="btnSwap" class="ico" title="ছবি ও টেক্সটের পাশ বদলান" aria-label="পাশ বদলান"><svg class="i"><use href="#i-swap"/></svg></button>
   <button id="btnAuto" title="চালু থাকলে পেস্ট করা টেক্সটের প্রতিটি হেডিংয়ের আগে (স্পেস ছাড়া) 1 বসবে" aria-pressed="false"></button>
   <span id="ttsBox">
-    <button id="btnPlay" title="টেক্সট শুনুন — নির্বাচিত অংশ, না থাকলে কার্সর থেকে শেষ পর্যন্ত"></button>
+    <button id="btnPlay" title="টেক্সট শুনুন — নির্বাচিত অংশ, না থাকলে কার্সর থেকে শেষ পর্যন্ত (শুরুর সময় সার্ভিস বাছার ডায়ালগ আসবে)"></button>
     <button id="btnStop" class="ico" title="শোনা বন্ধ করুন" aria-label="থামান" disabled><svg class="i"><use href="#i-stop"/></svg></button>
     <select id="ttsRate" title="পড়ার গতি" aria-label="পড়ার গতি">
       <option value="0.6">0.6×</option><option value="0.8">0.8×</option><option value="1">1×</option>
@@ -292,8 +314,14 @@
     <option value="auto">স্বয়ংক্রিয় (ফোনের TTS; না চললে Google অনলাইন)</option>
     <option value="device">শুধু ফোনের TTS</option>
     <option value="google">শুধু Google অনলাইন (ইন্টারনেট লাগবে)</option>
+    <option value="edge">শুধু Edge TTS (Microsoft)</option>
+    <option value="poll">শুধু Pollinations</option>
+    <option value="server">শুধু Piper / নিজস্ব সার্ভার</option>
+    <option value="watson">শুধু IBM Watson</option>
+    <option value="fish">শুধু Fish Audio</option>
   </select>
   <small>Google অনলাইন অডিও একটি অনানুষ্ঠানিক সার্ভিস (Google Translate-এর অডিও), তাই যেকোনো সময় বন্ধ বা সীমিত হতে পারে। এতে ভয়েস বাছা যায় না; ভাষা (বাংলা/আরবি/ইংরেজি) নিজে থেকে চেনা হয়।</small>
+  <small>এখানে শেষ বাছাই দেখায়। "শুনুন" বোতাম চাপলে প্রতিবার সার্ভিস বাছার ডায়ালগ আসে (সেখানে সব সার্ভিসের কনফিগও আছে)।</small>
   <label for="cVoiceBn">ফোনের ভয়েস — বাংলা</label>
   <select id="cVoiceBn"></select>
   <label for="cVoiceAr">ফোনের ভয়েস — আরবি</label>
@@ -340,6 +368,18 @@
     <button id="aCancel" type="button">বন্ধ</button>
     <button id="aSave" type="button">সংরক্ষণ</button>
     <button id="aRun" type="button" class="primary">সংরক্ষণ ও চালান</button>
+  </div>
+</dialog>
+
+<!-- শোনার সার্ভিস বাছাই: "শুনুন" চাপলে (নতুন করে শুরুর সময়) প্রতিবার এই ডায়ালগ আসে; সবার জন্য দৃশ্যমান (শুধু অ্যাডমিনের নয়) -->
+<dialog id="dlgTts">
+  <h3>কোন সার্ভিসে শুনবেন?</h3>
+  <small>একটি সার্ভিস বেছে নিন, দরকার হলে তার কনফিগ (কী / ভয়েস / URL) দিন, তারপর "শুনুন" চাপুন। কনফিগ এই ব্রাউজারে থেকে যায় (আবার লিখতে হবে না); শোনা শুরুর সময় প্রতিবার এই তালিকা আসবে, যাতে সার্ভিস বদলে নিতে পারেন।</small>
+  <div id="tsList"></div>
+  <small id="tsErr" hidden style="color:var(--err);font-weight:600"></small>
+  <div class="row">
+    <button id="tsCancel" type="button">বন্ধ</button>
+    <button id="tsGo" type="button" class="primary"><svg class="i"><use href="#i-play"/></svg><span>শুনুন</span></button>
   </div>
 </dialog>
 
@@ -436,6 +476,14 @@ window.__KP_READY = (async () => {
   const ic = n => '<svg class="i"><use href="#i-' + n + '"/></svg>';   // ছোট ভেক্টর আইকন
   const CK = 'kitab_proof_cfg_v1' + KP_SFX;      // সেটিংস + শেষ পেইজ + স্ক্রল/কার্সর অবস্থান
   const DK = 'kitab_proof_drafts_v1' + KP_SFX;   // অসংরক্ষিত খসড়া (পেইজ ধরে ধরে)
+  // শোনার অতিরিক্ত সার্ভিসের ডিফল্ট কনফিগ (কী/ভয়েস/URL ব্রাউজারে থেকে যায়, রিপোতে যায় না)
+  const TTSX_DEF = {
+    edge:   {bn:'bn-BD-NabanitaNeural', ar:'ar-SA-ZariyahNeural', en:'en-US-AriaNeural', ver:''},
+    poll:   {voice:'nova', tpl:'https://text.pollinations.ai/{text}?model=openai-audio&voice={voice}'},
+    server: {url:'http://localhost:5000/?text={text}'},
+    watson: {url:'', key:'', en:'en-US_MichaelV3Voice', ar:'ar-MS_OmarVoice'},
+    fish:   {key:'', model:'s1', ref:''}
+  };
   const defaults = {
     repo:'SunniPedia/pdftojpg', branch:'', token:'',
     pagesDir:'pages', textsDir:'texts', proofFile:'proofed.json', book:'', proofDir:'proofed',
@@ -475,7 +523,12 @@ window.__KP_READY = (async () => {
   try { cfg = {...defaults, ...JSON.parse(localStorage.getItem(CK) || '{}')}; } catch(e) {}
   if (!cfg.repo) cfg.repo = defaults.repo;
   if (!cfg.tts || typeof cfg.tts !== 'object') cfg.tts = {bn:'', ar:'', en:''};
-  if (!['auto', 'device', 'google'].includes(cfg.ttsEngine)) cfg.ttsEngine = 'auto';
+  if (!['auto', 'device', 'google', 'edge', 'poll', 'server', 'watson', 'fish'].includes(cfg.ttsEngine)) cfg.ttsEngine = 'auto';
+  {   // অতিরিক্ত সার্ভিসের কনফিগ: পুরনো সংরক্ষণে না থাকলে ডিফল্ট বসবে
+    const o = (cfg.ttsx && typeof cfg.ttsx === 'object') ? cfg.ttsx : {};
+    cfg.ttsx = {};
+    Object.keys(TTSX_DEF).forEach(k => { cfg.ttsx[k] = {...TTSX_DEF[k], ...(o[k] && typeof o[k] === 'object' ? o[k] : {})}; });
+  }
   // API ১ ও ২ এর সংরক্ষিত মান (পুরনো সংরক্ষণে এই ঘর না থাকলে ডিফল্ট বসবে)
   [1, 2].forEach(n => {
     const o = cfg['api' + n];
@@ -1354,8 +1407,9 @@ window.__KP_READY = (async () => {
   };
 
   // ---------- শোনা (TTS) ----------
-  // দুই ইঞ্জিন: (১) ফোনের নিজস্ব TTS (speechSynthesis), (২) Google Translate-এর অনলাইন অডিও (অনানুষ্ঠানিক, কী লাগে না)।
-  // "স্বয়ংক্রিয়" মোডে ফোনের TTS (ও সেই ভাষার ভয়েস) থাকলে সেটা, না থাকলে বা সাড়া না দিলে Google অনলাইন।
+  // ইঞ্জিন: (১) ফোনের নিজস্ব TTS (speechSynthesis), (২) Google Translate-এর অনলাইন অডিও (অনানুষ্ঠানিক, কী লাগে না),
+  // (৩) অতিরিক্ত সার্ভিস: Edge TTS, Pollinations, Piper/নিজস্ব সার্ভার, IBM Watson, Fish Audio (নিচে "শোনার সার্ভিস বাছাই" অংশে)।
+  // "শুনুন" চাপলে প্রতিবার সার্ভিস বাছার ডায়ালগ আসে। "স্বয়ংক্রিয়" মোডে ফোনের TTS (ও সেই ভাষার ভয়েস) থাকলে সেটা, না থাকলে বা সাড়া না দিলে Google অনলাইন।
   // নির্বাচিত অংশ থাকলে সেটুকু, নইলে কার্সর থেকে শেষ পর্যন্ত পড়ে। বাংলা/আরবি/ইংরেজি আলাদা করে চিনে।
   const hasTTS = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
   const TTS_LANG = {bn:'bn-BD', ar:'ar-SA', en:'en-US'};     // ফোনের TTS-এর ভাষা কোড
@@ -1364,7 +1418,7 @@ window.__KP_READY = (async () => {
   const TTS_MAX  = 180;                                      // এক খণ্ডে সর্বোচ্চ অক্ষর (Google সীমা ~200)
   const TTS_SENT = /[।.?!۔؟]["”’'\)\]]*$/;                    // বাক্য শেষ
   let voices = [], ttsWarned = {};
-  const tts = {id:0, chunks:[], i:0, state:'idle', start:0, u:null, ga:null, cache:{}, forceG:false, noG:false, retry:{}, wd:0, stale:false};   // state: idle | playing | paused
+  const tts = {id:0, chunks:[], i:0, state:'idle', start:0, u:null, ga:null, cache:{}, xc:{}, forceG:false, noG:false, retry:{}, wd:0, stale:false, reselect:false};   // state: idle | playing | paused
 
   function loadVoices() { try { voices = hasTTS ? (speechSynthesis.getVoices() || []) : []; } catch(e) { voices = []; } }
   if (hasTTS) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch(e) {} }
@@ -1455,13 +1509,16 @@ window.__KP_READY = (async () => {
   function killAudio(a) {
     if (!a) return;
     try { a.onplay = a.onplaying = a.onended = a.onerror = null; a.pause(); a.removeAttribute('src'); a.load(); } catch(e) {}
+    if (a._blob) { try { URL.revokeObjectURL(a._blob); } catch(e) {} a._blob = ''; }   // Edge/Watson/Fish-এর মেমোরি-অডিও ছেড়ে দেওয়া
   }
   function clearG() {
     killAudio(tts.ga); tts.ga = null;
     Object.keys(tts.cache).forEach(k => killAudio(tts.cache[k]));
     tts.cache = {};
+    Object.keys(tts.xc).forEach(k => dropX(k));
   }
   function stopPlay() {
+    tts.reselect = false;
     tts.id++;
     clearTimeout(tts.wd);
     cancelDev();
@@ -1496,9 +1553,9 @@ window.__KP_READY = (async () => {
     tts.ga = a;
     try { a.playbackRate = Math.min(2, Math.max(0.5, parseFloat(cfg.ttsRate) || 1)); a.preservesPitch = true; } catch(e) {}
     let settled = false;
-    const pauseHere = msg => {
+    const pauseHere = (msg, re = true) => {
       tts.id++; clearTimeout(tts.wd); cancelDev(); clearG();
-      tts.state = 'paused'; tts.i = i; ttsUI();
+      tts.state = 'paused'; tts.i = i; tts.reselect = re; ttsUI();
       toast(msg, true, 9000);
     };
     const fail = why => {
@@ -1516,7 +1573,7 @@ window.__KP_READY = (async () => {
         toast('Google অনলাইন অডিও বারবার ব্যর্থ — বাকিটা ফোনের TTS-এ চলছে', false, 4000);
         speakChunk(i, id); return;
       }
-      pauseHere('Google অডিও পাওয়া যাচ্ছে না (' + why + ') — সার্ভিসটি সাময়িক ব্লক/সীমিত হতে পারে। কিছুক্ষণ পরে "চালান" চাপুন, এই জায়গা থেকেই চলবে। (স্থায়ী সমাধান: সেটিংসে "শুধু ফোনের TTS" + ফোনে বাংলা ভয়েস ডেটা)');
+      pauseHere('Google অডিও পাওয়া যাচ্ছে না (' + why + ') — সার্ভিসটি সাময়িক ব্লক/সীমিত হতে পারে। কিছুক্ষণ পরে বা অন্য সার্ভিস বেছে নিয়ে "চালান" চাপুন — এই জায়গা থেকেই চলবে। (স্থায়ী সমাধান: সেটিংসে "শুধু ফোনের TTS" + ফোনে বাংলা ভয়েস ডেটা)');
     };
     a.onplay    = () => { if (id === tts.id) follow(c); };
     a.onplaying = () => { clearTimeout(tts.wd); };
@@ -1528,7 +1585,7 @@ window.__KP_READY = (async () => {
       if (id !== tts.id) return;
       const nm = (err && err.name) || '';
       if (nm === 'AbortError') return;
-      if (nm === 'NotAllowedError') { pauseHere('ব্রাউজার অডিও চালাতে দেয়নি — আবার "চালান" চাপুন'); return; }
+      if (nm === 'NotAllowedError') { pauseHere('ব্রাউজার অডিও চালাতে দেয়নি — আবার "চালান" চাপুন', false); return; }
       fail(nm === 'NotSupportedError' ? 'সার্ভার অডিও ফেরত দেয়নি, সম্ভবত রেট-লিমিট' : (nm || 'অজানা ত্রুটি'));
     });
     if (i + 1 < tts.chunks.length) gAudio(i + 1);     // পরের খণ্ড আগাম লোড
@@ -1539,7 +1596,16 @@ window.__KP_READY = (async () => {
     if (id !== tts.id) return;
     if (i >= tts.chunks.length) { finishPlay(); return; }
     tts.i = i;
-    const c = tts.chunks[i], eng = cfg.ttsEngine || 'auto';
+    const c = tts.chunks[i];
+    let eng = cfg.ttsEngine || 'auto';
+    if (XENG[eng]) {                          // অতিরিক্ত সার্ভিস (Edge/Pollinations/সার্ভার/Watson/Fish)
+      if (XENG[eng].langs[c.lang]) { playX(i, id); return; }
+      if (!ttsWarned['x' + c.lang]) {         // সার্ভিসটি এই ভাষা পারে না → শুধু এই অংশ ফোনের TTS / Google-এ
+        ttsWarned['x' + c.lang] = 1;
+        toast(XENG[eng].short + '-এ ' + TTS_NAME[c.lang] + ' নেই — ' + TTS_NAME[c.lang] + ' অংশ ফোনের TTS/Google-এ পড়া হচ্ছে', false, 4500);
+      }
+      eng = 'auto';
+    }
     const v = hasTTS ? pickVoice(c.lang) : null;
     const wantG = tts.forceG || !hasTTS || !v;
     const useG = eng === 'google' || (eng === 'auto' && wantG && !(tts.noG && hasTTS && v));
@@ -1584,6 +1650,316 @@ window.__KP_READY = (async () => {
       tts.wd = setTimeout(() => { if (id === tts.id && !started) fallbackToG('সাড়া দিচ্ছে না'); }, 4000);
     }
   }
+  // ---------- শোনার সার্ভিস বাছাই (ডায়ালগ) + অতিরিক্ত সার্ভিস ----------
+  // "শুনুন" চাপলে (নতুন করে শুরুর সময়) ডায়ালগ আসে: স্বয়ংক্রিয় / ফোনের TTS / Google অনলাইন + নিচের সার্ভিসগুলো থেকে একটি বাছতে হয়।
+  // প্রতিটি সার্ভিসের কনফিগ (কী, ভয়েস, URL) ব্রাউজারে থেকে যায় (cfg.ttsx) — আবার টাইপ করতে হয় না।
+  // সার্ভিস যে ভাষা পারে না (যেমন Watson/Fish-এ বাংলা), শুধু সেই অংশ নিজে থেকে ফোনের TTS/Google-এ পড়া হয়।
+  // বিরতির পর "চালান" চাপলে ডায়ালগ আসে না (একই সার্ভিসে চলে); সার্ভিস ব্যর্থ হয়ে থামলে পরের "চালান"-এ আবার ডায়ালগ আসে।
+  const EDGE_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+  const EDGE_VER = '1-143.0.3650.75';
+  const VOP = a => a.map(v => Array.isArray(v) ? v : [v, v]);
+  const XENG = {
+    edge: {
+      short: 'Edge TTS', name: 'Edge TTS (Microsoft)',
+      desc: 'Microsoft Edge-এর অনলাইন ভয়েস — ফ্রি, কী লাগে না; বাংলা/আরবি/ইংরেজি তিনটিই।',
+      tags: [['ফ্রি', 'ok'], ['কী লাগে না', 'ok'], ['বাংলা আছে', 'ok'], ['অনানুষ্ঠানিক', 'warn']],
+      langs: {bn: 1, ar: 1, en: 1},
+      fields: [
+        {k: 'bn', t: 'sel', label: 'ভয়েস — বাংলা', opts: VOP([['bn-BD-NabanitaNeural', 'Nabanita (বাংলাদেশ, নারী)'], ['bn-BD-PradeepNeural', 'Pradeep (বাংলাদেশ, পুরুষ)'], ['bn-IN-TanishaaNeural', 'Tanishaa (ভারত, নারী)'], ['bn-IN-BashkarNeural', 'Bashkar (ভারত, পুরুষ)']])},
+        {k: 'ar', t: 'sel', label: 'ভয়েস — আরবি', opts: VOP([['ar-SA-ZariyahNeural', 'Zariyah (সৌদি, নারী)'], ['ar-SA-HamedNeural', 'Hamed (সৌদি, পুরুষ)'], ['ar-EG-SalmaNeural', 'Salma (মিশর, নারী)'], ['ar-EG-ShakirNeural', 'Shakir (মিশর, পুরুষ)']])},
+        {k: 'en', t: 'sel', label: 'ভয়েস — ইংরেজি', opts: VOP([['en-US-AriaNeural', 'Aria (US, নারী)'], ['en-US-GuyNeural', 'Guy (US, পুরুষ)'], ['en-US-JennyNeural', 'Jenny (US, নারী)'], ['en-GB-SoniaNeural', 'Sonia (UK, নারী)']])},
+        {k: 'ver', t: 'text', label: 'Sec-MS-GEC-Version (উন্নত; ফাঁকা = ডিফল্ট)', ph: EDGE_VER}
+      ],
+      hint: 'এটি Microsoft-এর প্রকাশ্য API নয়, অনানুষ্ঠানিক সংযোগ — Microsoft বদলালে বা ব্লক করলে ব্যর্থ হতে পারে। তখন ওপরের "Sec-MS-GEC-Version" নতুন সংস্করণে বদলে দেখুন, নইলে অন্য সার্ভিস বাছুন।'
+    },
+    poll: {
+      short: 'Pollinations', name: 'Pollinations',
+      desc: 'ফ্রি AI ভয়েস API — সাইনআপ/কী ছাড়াই; URL-এ টেক্সট দিলে অডিও আসে।',
+      tags: [['ফ্রি', 'ok'], ['কী লাগে না', 'ok'], ['বাংলার মান নিজে পরখ করুন', 'warn']],
+      langs: {bn: 1, ar: 1, en: 1},
+      fields: [
+        {k: 'voice', t: 'sel', label: 'ভয়েস', opts: VOP(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'])},
+        {k: 'tpl', t: 'text', label: 'URL টেমপ্লেট', ph: 'https://text.pollinations.ai/{text}?model=openai-audio&voice={voice}'}
+      ],
+      hint: '{text} = পড়ার টেক্সট, {voice} = ভয়েস। কখনো টেক্সট না পড়ে নিজে থেকে উত্তর দিলে {text}-এর আগে একটি নির্দেশ জুড়ে পরখ করুন, যেমন: https://text.pollinations.ai/Read%20aloud%3A%20{text}?model=openai-audio&voice={voice}'
+    },
+    server: {
+      short: 'নিজস্ব সার্ভার', name: 'Piper / নিজস্ব সার্ভার (URL)',
+      desc: 'নিজের কম্পিউটার/সার্ভারে চালানো যেকোনো TTS (যেমন Piper) — আনলিমিটেড ও প্রাইভেট।',
+      tags: [['আনলিমিটেড', 'ok'], ['নিজে সেটআপ লাগে', 'warn']],
+      langs: {bn: 1, ar: 1, en: 1},
+      fields: [{k: 'url', t: 'text', label: 'URL টেমপ্লেট (GET → অডিও)', ph: 'http://localhost:5000/?text={text}'}],
+      hint: '{text} = টেক্সট, {lang} = bn/ar/en। উদাহরণ (Piper HTTP সার্ভার): http://localhost:5000/?text={text}। HTTPS পেইজ থেকে http সার্ভার ব্রাউজার ব্লক করে (শুধু localhost বাদে), আর ফোনে localhost মানে ফোনটিই। Piper-এর বাংলা ভয়েস মডেল আছে কিনা আগে যাচাই করুন।'
+    },
+    watson: {
+      short: 'IBM Watson', name: 'IBM Watson TTS',
+      desc: 'IBM Cloud-এর ফ্রি (লাইট) প্ল্যানে সীমিত অক্ষর; আরবি ও ইংরেজি আছে।',
+      tags: [['ফ্রি টিয়ার (সীমিত)', 'warn'], ['কী লাগে', 'warn'], ['বাংলা নেই', 'err']],
+      langs: {ar: 1, en: 1},
+      fields: [
+        {k: 'url', t: 'text', label: 'Service URL', ph: 'https://api.us-south.text-to-speech.watson.cloud.ibm.com/instances/…'},
+        {k: 'key', t: 'pw', label: 'API Key'},
+        {k: 'en', t: 'sel', label: 'ভয়েস — ইংরেজি', opts: VOP([['en-US_MichaelV3Voice', 'Michael (US)'], ['en-US_AllisonV3Voice', 'Allison (US)'], ['en-GB_KateV3Voice', 'Kate (UK)']])},
+        {k: 'ar', t: 'sel', label: 'ভয়েস — আরবি', opts: VOP([['ar-MS_OmarVoice', 'Omar']])}
+      ],
+      hint: 'IBM Cloud-এ Text to Speech সার্ভিস বানালে তার Credentials থেকে URL ও API Key পাবেন। বাংলা অংশ নিজে থেকে ফোনের TTS/Google-এ পড়া হবে।'
+    },
+    fish: {
+      short: 'Fish Audio', name: 'Fish Audio',
+      desc: 'উচ্চমানের AI ভয়েস API। ফ্রি অ্যাক্সেস সীমিত সময়ের ছিল — এখন ফ্রি আছে কিনা তাদের সাইটে দেখুন।',
+      tags: [['কী লাগে', 'warn'], ['ফ্রি অনিশ্চিত', 'warn'], ['বাংলা নেই বলে জানি', 'err']],
+      langs: {ar: 1, en: 1},
+      fields: [
+        {k: 'key', t: 'pw', label: 'API Key'},
+        {k: 'model', t: 'text', label: 'Model (হেডার)', ph: 's1'},
+        {k: 'ref', t: 'text', label: 'ভয়েস (reference_id) — ঐচ্ছিক'}
+      ],
+      hint: 'API Key: fish.audio → API Keys। Model-এ আপনার অ্যাকাউন্টে চালু মডেলের নাম দিন। বাংলা অংশ নিজে থেকে ফোনের TTS/Google-এ পড়া হবে।'
+    }
+  };
+  const TS_BASE = {
+    auto:   {name: 'স্বয়ংক্রিয় (প্রস্তাবিত)', desc: 'ফোনের TTS আগে; ভয়েস না থাকলে বা সাড়া না দিলে Google অনলাইন।', tags: [['কী লাগে না', 'ok']]},
+    device: {name: 'ফোনের TTS', desc: 'ডিভাইসের নিজস্ব ইঞ্জিন — অফলাইনে চলে, আনলিমিটেড।', tags: [['অফলাইন', 'ok'], ['কী লাগে না', 'ok'], ['ভয়েস ডিভাইসের ওপর নির্ভর', 'warn']]},
+    google: {name: 'Google অনলাইন', desc: 'Google Translate-এর অডিও — ভাষা নিজে চেনা হয়, ভয়েস বাছা যায় না।', tags: [['ইন্টারনেট লাগে', 'warn'], ['অনানুষ্ঠানিক — সীমিত হতে পারে', 'warn']]}
+  };
+  const TS_ORDER = ['auto', 'device', 'google', 'edge', 'poll', 'server', 'watson', 'fish'];
+  const tsMeta = id => TS_BASE[id] || XENG[id];
+
+  // --- অতিরিক্ত সার্ভিস থেকে অডিও আনা ---
+  const tplUrl = (tpl, c, x) => String(tpl || '').replace(/\{(text|lang|voice)\}/g, (m, k) =>
+    encodeURIComponent(k === 'text' ? c.t : k === 'lang' ? c.lang : (x.voice || '')));
+  async function fetchAudio(name, url, opt) {
+    const r = await fetch(url, opt);
+    if (!r.ok) { let m = ''; try { m = (await r.text()).slice(0, 120); } catch(e) {} throw new Error(name + ' ' + r.status + (m ? ': ' + m : '')); }
+    const b = await r.blob();
+    if (!b.size || /json|text|html/i.test(b.type)) throw new Error(name + ': অডিও আসেনি');
+    return URL.createObjectURL(b);
+  }
+  async function edgeGec() {                  // Edge-এর Sec-MS-GEC টোকেন: Windows-টিক (৫ মিনিটে গোল) + ক্লায়েন্ট টোকেনের SHA-256
+    if (!(window.crypto && crypto.subtle)) throw new Error('এই ব্রাউজারে (নিরাপদ HTTPS ছাড়া) crypto নেই');
+    let t = BigInt(Math.floor(Date.now() / 1000) + 11644473600); t -= t % 300n; t *= 10000000n;
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t.toString() + EDGE_TOKEN));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+  async function edgeAudio(c, x, sig) {
+    const voice = x[c.lang] || TTSX_DEF.edge[c.lang];
+    const gec = await edgeGec();
+    const rid = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()).replace(/-/g, '');
+    const url = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + EDGE_TOKEN +
+                '&ConnectionId=' + rid + '&Sec-MS-GEC=' + gec + '&Sec-MS-GEC-Version=' + encodeURIComponent(x.ver || EDGE_VER);
+    const xml = c.t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return new Promise((res, rej) => {
+      const parts = []; let ws, done = false;
+      const end = err => {
+        if (done) return; done = true;
+        try { ws && ws.close(); } catch(e) {}
+        if (err) rej(err); else res(URL.createObjectURL(new Blob(parts, {type: 'audio/mpeg'})));
+      };
+      try { ws = new WebSocket(url); } catch(e) { rej(e); return; }
+      ws.binaryType = 'arraybuffer';
+      if (sig) sig.addEventListener('abort', () => end(new Error('বাতিল')));
+      ws.onopen = () => {
+        const ts = new Date().toUTCString().replace('GMT', 'GMT+0000 (Coordinated Universal Time)');
+        ws.send('X-Timestamp:' + ts + '\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n' +
+          '{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}\r\n');
+        ws.send('X-RequestId:' + rid + '\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:' + ts + 'Z\r\nPath:ssml\r\n\r\n' +
+          "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='" + voice +
+          "'><prosody pitch='+0Hz' rate='+0%' volume='+0%'>" + xml + '</prosody></voice></speak>');
+      };
+      ws.onmessage = ev => {
+        if (typeof ev.data === 'string') { if (/Path:turn\.end/.test(ev.data)) end(parts.length ? null : new Error('Edge: অডিও আসেনি')); return; }
+        const hl = new DataView(ev.data).getUint16(0);
+        const head = new TextDecoder().decode(new Uint8Array(ev.data, 2, hl));
+        if (/Path:audio/.test(head)) { const body = ev.data.slice(2 + hl); if (body.byteLength) parts.push(body); }
+      };
+      ws.onerror = () => end(new Error('Edge সার্ভারে সংযোগ হয়নি'));
+      ws.onclose = () => end(parts.length ? null : new Error('Edge সংযোগ বন্ধ হয়ে গেছে'));
+    });
+  }
+  async function xSrc(eng, c, sig) {
+    const x = cfg.ttsx[eng] || {};
+    if (eng === 'poll') return tplUrl(x.tpl, c, x);
+    if (eng === 'server') return tplUrl(x.url, c, x);
+    if (eng === 'edge') return edgeAudio(c, x, sig);
+    if (eng === 'watson') {
+      const base = String(x.url || '').trim().replace(/\/v1\/.*$/, '').replace(/\/+$/, '');
+      return fetchAudio('IBM Watson', base + '/v1/synthesize?voice=' + encodeURIComponent(x[c.lang] || ''), {
+        method: 'POST', signal: sig,
+        headers: {'Authorization': 'Basic ' + btoa('apikey:' + (x.key || '')), 'Content-Type': 'application/json', 'Accept': 'audio/mp3'},
+        body: JSON.stringify({text: c.t})
+      });
+    }
+    if (eng === 'fish') {
+      const body = {text: c.t, format: 'mp3'}; if (x.ref) body.reference_id = x.ref;
+      return fetchAudio('Fish Audio', 'https://api.fish.audio/v1/tts', {
+        method: 'POST', signal: sig,
+        headers: {'Authorization': 'Bearer ' + (x.key || ''), 'Content-Type': 'application/json', 'model': x.model || 's1'},
+        body: JSON.stringify(body)
+      });
+    }
+    throw new Error('অজানা সার্ভিস');
+  }
+  function dropX(i) {                         // একটি খণ্ডের আনা/আসছে-অডিও বাতিল ও মুছে ফেলা
+    const h = tts.xc[i]; if (!h) return;
+    delete tts.xc[i];
+    try { h.ac.abort(); } catch(e) {}
+    h.p.then(a => killAudio(a), () => {});
+  }
+  function xFetch(i) {                        // খণ্ডের অডিও আনা শুরু (ক্যাশে থাকলে সেটাই)
+    if (tts.xc[i]) return tts.xc[i];
+    const c = tts.chunks[i]; if (!c) return null;
+    const ac = new AbortController();
+    const p = xSrc(cfg.ttsEngine, c, ac.signal).then(url => {
+      const a = new Audio(); a.preload = 'auto';
+      try { a.referrerPolicy = 'no-referrer'; } catch(e) {}
+      if (/^blob:/.test(url)) a._blob = url;
+      a.src = url;
+      return a;
+    });
+    p.catch(() => {});                        // বাতিল/ব্যর্থ হলে "unhandled" সতর্কতা নয়; ব্যবহারকারী নিচে নিজে ধরে
+    return (tts.xc[i] = {p, ac});
+  }
+  const errShort = e => ((e && e.name === 'TypeError') ? 'নেটওয়ার্ক/CORS ত্রুটি' : ((e && e.message) || 'অজানা ত্রুটি')).slice(0, 90);
+  // অতিরিক্ত সার্ভিসে পড়া: ব্যর্থ হলে ৩ বার পুনঃচেষ্টা (বিরতি বাড়িয়ে) → তারপর থেমে যায়; পরের "চালান"-এ সার্ভিস আবার বাছার ডায়ালগ আসে
+  function playX(i, id, bust) {
+    if (id !== tts.id) return;
+    const eng = cfg.ttsEngine, M = XENG[eng], c = tts.chunks[i];
+    if (!M || !c) { stopPlay(); return; }
+    if (bust) dropX(i);
+    const h = xFetch(i);
+    let settled = false, cura = null;
+    const pauseHere = (msg, re = true) => {
+      tts.id++; clearTimeout(tts.wd); cancelDev(); clearG();
+      tts.state = 'paused'; tts.i = i; tts.reselect = re; ttsUI();
+      toast(msg, true, 9000);
+    };
+    const fail = why => {
+      if (id !== tts.id || settled) return;
+      settled = true; clearTimeout(tts.wd);
+      if (cura) { killAudio(cura); if (tts.ga === cura) tts.ga = null; }
+      dropX(i);
+      const n = tts.retry[i] = (tts.retry[i] || 0) + 1;
+      if (n <= G_RETRY) {
+        toast(M.short + ' আটকেছে (' + why + ') — আবার চেষ্টা ' + n + '/' + G_RETRY + '…', false, G_WAIT[n - 1]);
+        tts.wd = setTimeout(() => playX(i, id, true), G_WAIT[n - 1]);
+        return;
+      }
+      pauseHere(M.short + ' থেকে অডিও পাওয়া যাচ্ছে না (' + why + ')। "চালান" চাপলে অন্য সার্ভিস বেছে নিতে পারবেন — এই জায়গা থেকেই চলবে।');
+    };
+    clearTimeout(tts.wd); tts.wd = setTimeout(() => fail('সাড়া আসেনি'), 20000);
+    h.p.then(a => {
+      if (id !== tts.id || settled) return;
+      cura = a; tts.ga = a;
+      try { a.playbackRate = Math.min(2, Math.max(0.5, parseFloat(cfg.ttsRate) || 1)); a.preservesPitch = true; } catch(e) {}
+      a.onplay    = () => { if (id === tts.id) follow(c); };
+      a.onplaying = () => { clearTimeout(tts.wd); };
+      a.onended   = () => { if (id === tts.id) { dropX(i); speakChunk(i + 1, id); } };
+      a.onerror   = () => fail('অডিও চালানো যায়নি');
+      const p = a.play();
+      if (p && p.catch) p.catch(err => {
+        if (id !== tts.id) return;
+        const nm = (err && err.name) || '';
+        if (nm === 'AbortError') return;
+        if (nm === 'NotAllowedError') { pauseHere('ব্রাউজার অডিও চালাতে দেয়নি — আবার "চালান" চাপুন', false); return; }
+        fail(nm === 'NotSupportedError' ? 'সার্ভার অডিও ফেরত দেয়নি' : (nm || 'অজানা ত্রুটি'));
+      });
+    }, err => fail(errShort(err)));
+    if (i + 1 < tts.chunks.length) xFetch(i + 1);   // পরের খণ্ড আগাম আনা
+  }
+
+  // --- সার্ভিস বাছাইয়ের ডায়ালগ ---
+  let tsSel = 'auto', tsCb = null;
+  const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  function buildTtsDlg() {
+    closeDD(); loadVoices();
+    const box = $('tsList'); box.innerHTML = '';
+    const sels = [];
+    TS_ORDER.forEach(id => {
+      const m = tsMeta(id);
+      const item = mk('div', 'tsItem' + (id === tsSel ? ' sel' : '')); item.dataset.id = id;
+      box.appendChild(item);                  // আগে DOM-এ বসাই (fillVoiceSel / enhanceSelect-এর জন্য)
+      const pick = mk('button', 'tsPick'); pick.type = 'button';
+      const b = mk('b'); b.append(mk('span', 'tsDot'), document.createTextNode(m.name));
+      const tg = mk('span', 'tsTags'); (m.tags || []).forEach(([t, k]) => tg.append(mk('span', 'tsTag ' + k, t)));
+      pick.append(b, mk('span', 's', m.desc), tg);
+      pick.onclick = () => {
+        tsSel = id; closeDD();
+        box.querySelectorAll('.tsItem').forEach(it => it.classList.toggle('sel', it.dataset.id === id));
+        $('tsErr').hidden = true;
+        setTimeout(() => item.scrollIntoView({block: 'nearest', behavior: 'smooth'}), 30);
+      };
+      const panel = mk('div', 'tsPanel');
+      item.append(pick, panel);
+      if (id === 'device') {                  // ফোনের ভয়েস (সেটিংসের একই কনফিগ)
+        if (!hasTTS) panel.append(mk('small', '', 'এই ব্রাউজারে ফোনের টেক্সট-টু-স্পিচ নেই।'));
+        [['bn', 'tdVoiceBn'], ['ar', 'tdVoiceAr'], ['en', 'tdVoiceEn']].forEach(([l, sid]) => {
+          const lb = mk('label', '', 'ফোনের ভয়েস — ' + TTS_NAME[l]); lb.htmlFor = sid;
+          const s = document.createElement('select'); s.id = sid;
+          panel.append(lb, s);
+          fillVoiceSel(sid, l);
+          s.addEventListener('change', () => { cfg.tts = {...cfg.tts, [l]: s.value}; saveCfg(); });
+          sels.push(s);
+        });
+        panel.append(mk('small', '', 'ভয়েস ডিভাইসের টেক্সট-টু-স্পিচ ইঞ্জিন থেকে আসে। "স্বয়ংক্রিয়" রাখলে ডিভাইসের সেরা মিল ব্যবহার হবে। বাংলা ভয়েস না দেখালে ফোনের সেটিংসে ভয়েস ডেটা ডাউনলোড করুন, বা ডিভাইসের TTS ইঞ্জিন বদলান।'));
+      }
+      const M = XENG[id];
+      if (M) {
+        const x = cfg.ttsx[id];
+        M.fields.forEach(f => {
+          const fid = 'tx_' + id + '_' + f.k;
+          const lb = mk('label', '', f.label); lb.htmlFor = fid;
+          let el;
+          if (f.t === 'sel') {
+            el = document.createElement('select');
+            f.opts.forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; el.appendChild(o); });
+          } else {
+            el = document.createElement('input'); el.type = f.t === 'pw' ? 'password' : 'text';
+            el.setAttribute('autocapitalize', 'off'); el.setAttribute('autocomplete', 'off'); el.spellcheck = false;
+            if (f.ph) el.placeholder = f.ph;
+          }
+          el.id = fid;
+          panel.append(lb, el);
+          el.value = x[f.k] != null ? x[f.k] : '';
+          if (f.t === 'sel') sels.push(el);
+          const h = () => { cfg.ttsx[id][f.k] = el.value.trim(); saveCfg(); };
+          el.addEventListener('input', h); el.addEventListener('change', h);
+        });
+        if (M.hint) panel.append(mk('small', '', M.hint));
+      }
+    });
+    sels.forEach(enhanceSelect);              // নিজস্ব ফন্টের ড্রপডাউন
+    const first = box.querySelector('.tsItem.sel'); if (first) setTimeout(() => first.scrollIntoView({block: 'nearest'}), 30);
+  }
+  function tsValidate(id) {
+    const x = cfg.ttsx[id] || {};
+    if (id === 'device' && !hasTTS) return 'এই ব্রাউজারে ফোনের টেক্সট-টু-স্পিচ নেই — অন্য সার্ভিস বাছুন';
+    if (id === 'watson' && !(x.url && x.key)) return 'IBM Watson-এর Service URL ও API Key দিন';
+    if (id === 'fish' && !x.key) return 'Fish Audio-র API Key দিন';
+    if (id === 'poll' && !/\{text\}/.test(x.tpl || '')) return 'URL টেমপ্লেটে {text} থাকতে হবে';
+    if (id === 'server' && !/\{text\}/.test(x.url || '')) return 'URL টেমপ্লেটে {text} থাকতে হবে';
+    return '';
+  }
+  function askTts(cb) {
+    tsCb = cb;
+    tsSel = TS_ORDER.includes(cfg.ttsEngine) ? cfg.ttsEngine : 'auto';   // শেষ বাছাই আগে থেকে চিহ্নিত
+    $('tsErr').hidden = true;
+    buildTtsDlg();
+    const d = $('dlgTts'); if (!d.open) d.showModal();
+  }
+  $('tsCancel').onclick = () => $('dlgTts').close();
+  $('dlgTts').addEventListener('close', () => { tsCb = null; closeDD(); });
+  $('tsGo').onclick = () => {
+    const e = tsValidate(tsSel), er = $('tsErr');
+    er.hidden = !e; er.textContent = e;
+    if (e) return;
+    cfg.ttsEngine = tsSel; saveCfg();
+    try { $('cEngine').value = tsSel; } catch(_) {}   // সেটিংস ডায়ালগের ইঞ্জিনও মিলিয়ে রাখা
+    tts.forceG = false; clearG();
+    const cb = tsCb; tsCb = null;
+    $('dlgTts').close();
+    if (cb) cb();
+  };
+
   function startFrom(i) {
     tts.id++;
     const id = tts.id;
@@ -1599,11 +1975,15 @@ window.__KP_READY = (async () => {
       tts.id++;
       clearTimeout(tts.wd);
       cancelDev();
-      killAudio(tts.ga); tts.ga = null; delete tts.cache[tts.i];
+      killAudio(tts.ga); tts.ga = null; delete tts.cache[tts.i]; dropX(tts.i);
       tts.state = 'paused'; ttsUI();
       return;
     }
-    if (tts.state === 'paused') { startFrom(tts.i); return; }
+    if (tts.state === 'paused') {
+      if (!tts.reselect) { startFrom(tts.i); return; }          // সাধারণ বিরতি: একই সার্ভিসে চালু
+      askTts(() => { tts.reselect = false; startFrom(tts.i); });  // সার্ভিস ব্যর্থ হয়ে থেমেছিল: আবার সার্ভিস বাছুন
+      return;
+    }
     const text = ta.value;
     if (!text.trim()) { toast('পড়ার মতো টেক্সট নেই', true); return; }
     let a = ta.selectionStart, b = ta.selectionEnd;
@@ -1614,8 +1994,11 @@ window.__KP_READY = (async () => {
     if (!tts.chunks.length) { toast('পড়ার মতো টেক্সট নেই', true); return; }
     tts.start = a;
     const langs = [...new Set(tts.chunks.map(c => TTS_NAME[c.lang]))].join(' + ');
-    toast('শোনা শুরু • ভাষা: ' + langs);
-    startFrom(0);
+    askTts(() => {                            // সার্ভিস বাছাই হলে তবেই শোনা শুরু
+      const m = tsMeta(cfg.ttsEngine);
+      toast('শোনা শুরু • ভাষা: ' + langs + (m ? ' • ' + m.name : ''));
+      startFrom(0);
+    });
   }
   $('btnPlay').onclick = playClick;
   $('btnStop').onclick = () => { stopPlay(); toast('শোনা বন্ধ'); };
