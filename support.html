@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b5f4c">
+<title>সাপোর্ট - কিতাব প্রুফিং</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+
+<style>
+/* ===== সাপোর্ট পেইজ — রঙ/ফন্ট সব common.css + theme.css (RizwanTask থিম) থেকে ===== */
+html,body{height:100%;overflow:hidden}
+body{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+.logo-sm{display:flex;width:30px;height:30px;border-radius:9px;background:var(--pri);color:var(--pri-fg);align-items:center;justify-content:center;flex:none}
+.logo-sm .i{width:18px;height:18px}
+header.top{flex:none}
+header.top h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header.top .back{flex:none;width:36px;height:36px;padding:0;border-radius:50%}
+header.top .back .i{width:20px;height:20px;stroke-width:2.4}
+
+/* ===== SCREENS ===== */
+.screen{display:none;flex-direction:column;flex:1;min-height:0;height:100%}
+.screen.active{display:flex}
+
+/* ===== টিকেট ফর্ম ===== */
+.form-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;padding:18px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.form-card{margin:auto;width:100%;max-width:440px;padding:22px 20px 24px}
+.form-card .brand{margin:6px 0 18px}
+.form-card label.f:first-of-type{margin-top:0}
+.form-card textarea{min-height:120px}
+.form-card input[readonly]{background:var(--panel2);color:var(--muted)}
+.form-card button.block{margin-top:20px;padding:12px;font-size:15.5px}
+
+/* ===== চ্যাট ===== */
+#chat-header .chat-header-info{flex:1;min-width:0}
+#chat-header .chat-title{font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chat-header .chat-sub{font-size:12px;color:rgba(255,255,255,.78);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status-badge{flex:none;padding:3px 11px;border-radius:99px;font-size:11.5px;font-weight:700;border:1px solid transparent}
+.status-open{background:rgba(111,208,140,.2);color:#9be8b3;border-color:rgba(111,208,140,.45)}
+.status-pending{background:rgba(251,191,36,.18);color:#fcd34d;border-color:rgba(251,191,36,.45)}
+.status-closed{background:rgba(248,113,113,.18);color:#fca5a5;border-color:rgba(248,113,113,.45)}
+
+#msg-container{flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:5px;-webkit-overflow-scrolling:touch}
+#msg-container::-webkit-scrollbar{width:3px}
+#msg-container::-webkit-scrollbar-thumb{background:var(--line)}
+
+@keyframes slideInUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+.message-wrapper{display:flex;flex-direction:column;width:100%;animation:slideInUp .25s ease-out}
+.message{max-width:78%;padding:10px 14px;border-radius:18px;font-size:15.5px;word-wrap:break-word;overflow-wrap:anywhere;line-height:1.55;cursor:pointer;user-select:none}
+.me{align-self:flex-end;background:linear-gradient(135deg,var(--pri),var(--pri2));color:var(--pri-fg);border-bottom-right-radius:4px;box-shadow:0 3px 12px var(--glow)}
+.other{align-self:flex-start;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-bottom-left-radius:4px}
+.sender-name{font-size:11.5px;color:var(--gold);font-weight:600;margin-bottom:3px;margin-left:5px}
+.info-row{display:flex;flex-direction:column;margin-top:2px;margin-bottom:8px}
+.time-stamp{font-size:10.5px;color:var(--muted);display:none}
+.seen-status{font-size:10.5px;color:var(--pri);margin-top:2px;display:none}
+.me-info{align-self:flex-end;text-align:right;margin-right:5px}
+.other-info{align-self:flex-start;text-align:left;margin-left:5px}
+.show-info{display:block}
+
+.sys-msg{align-self:center;text-align:center;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:5px 14px;margin:6px 0;max-width:92%;overflow-wrap:anywhere}
+
+/* টিকেট বন্ধ হলে */
+.closed-notice{flex:none;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(0deg,var(--bg),var(--panel));border-top:1px solid var(--gold);font-size:13px;font-weight:600;color:var(--err)}
+.closed-notice button{border-radius:99px;padding:10px 20px}
+
+/* মেসেজ বক্স */
+#input-box{flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(0deg,var(--bg),var(--panel));border-top:1px solid var(--line);box-shadow:0 -6px 20px var(--glow)}
+#input{flex:1;padding:11px 16px;border-radius:24px;font-size:15px;background:var(--bg)}
+#send-btn{flex:none;width:42px;height:42px;padding:0;border-radius:50%;border:0;color:var(--pri-fg);
+  background:linear-gradient(135deg,var(--pri),var(--pri2));box-shadow:0 3px 12px var(--glow)}
+#send-btn:hover{filter:brightness(1.06)}
+#send-btn .i{width:19px;height:19px;stroke-width:2.3}
+</style>
+</head>
+<body>
+
+<!-- ===== টিকেট ফর্ম ===== -->
+<div id="form-screen" class="screen active">
+  <header class="top">
+    <button class="sm back" id="bBackForm" type="button" aria-label="ফিরে যান" title="ফিরে যান"><span data-ic="left"></span></button>
+    <span class="logo-sm" data-ic="mark"></span>
+    <h2>সাপোর্ট</h2>
+  </header>
+
+  <div class="form-scroll">
+    <div class="card form-card">
+      <div class="brand">
+        <div class="logo" data-ic="headset"></div>
+        <h1>সাপোর্ট</h1>
+        <p id="form-subtitle">আপনার সমস্যা জানান, আমরা সাহায্য করব</p>
+      </div>
+
+      <div id="name-group">
+        <label class="f" for="f-name">আপনার নাম *</label>
+        <input id="f-name" type="text" placeholder="নাম লিখুন">
+      </div>
+
+      <label class="f" for="f-desc">সমস্যার বিবরণ *</label>
+      <textarea id="f-desc" placeholder="আপনার সমস্যা বিস্তারিত লিখুন..."></textarea>
+
+      <button class="primary block" type="button" onclick="openTicket()"><span data-ic="ticket"></span>টিকেট খুলুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== চ্যাট ===== -->
+<div id="chat-screen" class="screen">
+  <header class="top" id="chat-header">
+    <button class="sm back" id="bBackChat" type="button" aria-label="ফিরে যান" title="ফিরে যান"><span data-ic="left"></span></button>
+    <div class="chat-header-info">
+      <div class="chat-title" id="header-name">—</div>
+      <div class="chat-sub" id="header-sub">—</div>
+    </div>
+    <span class="status-badge status-open" id="header-status">খোলা</span>
+  </header>
+
+  <div id="msg-container"></div>
+
+  <div id="input-box">
+    <input id="input" placeholder="মেসেজ লিখুন..." autocomplete="off">
+    <button id="send-btn" type="button" aria-label="পাঠান"><span data-ic="send"></span></button>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+App.hydrateIcons();
+// ফিরে যান → টাস্ক পেইজ (প্রোফাইল ট্যাবে)
+document.getElementById('bBackForm').onclick = document.getElementById('bBackChat').onclick = function () {
+  location.href = 'task.html#prof';
+};
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded, set, onValue, onDisconnect, update, serverTimestamp }
+from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDqjbhRTpFgwRtZrqCG-ckO-UM_uZqh2Rc",
+  authDomain: "srizwanchat.firebaseapp.com",
+  projectId: "srizwanchat",
+  storageBucket: "srizwanchat.firebasestorage.app",
+  messagingSenderId: "101112162367",
+  appId: "1:101112162367:web:5d33f592297f4f9967b08a",
+  measurementId: "G-8XHB9HQTMR"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let myTicketId = localStorage.getItem("ticket_id");
+let myName = localStorage.getItem("ticket_name");
+let ticketClosed = false;
+let currentTicketUnsub = null;
+
+function toBanglaNum(n) {
+  return n.toString().replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  let h = d.getHours(), m = d.getMinutes();
+  const ap = h >= 12 ? 'পিএম' : 'এএম';
+  h = h % 12 || 12;
+  return toBanglaNum(h) + ':' + toBanglaNum(m < 10 ? '0'+m : m) + ' ' + ap;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Reset form for new ticket (with existing name)
+function resetFormForNewTicket() {
+  const savedName = localStorage.getItem("ticket_name");
+  const nameInput = document.getElementById('f-name');
+  const nameGroup = document.getElementById('name-group');
+  const subtitle = document.getElementById('form-subtitle');
+  
+  if (savedName) {
+    nameInput.value = savedName;
+    nameInput.readOnly = true;
+    nameGroup.style.opacity = '0.8';
+    subtitle.innerText = 'নতুন সমস্যার বিবরণ দিন';
+  } else {
+    let sessName = '';
+    try { sessName = (window.App && App.session.get() && App.session.get().name) || ''; } catch (e) {}
+    nameInput.value = sessName;
+    nameInput.readOnly = false;
+    nameGroup.style.opacity = '1';
+    subtitle.innerText = 'আপনার সমস্যা জানান, আমরা সাহায্য করব';
+  }
+  
+  document.getElementById('f-desc').value = '';
+}
+
+// Clean up previous ticket listener
+function cleanupCurrentTicket() {
+  if (currentTicketUnsub) {
+    currentTicketUnsub();
+    currentTicketUnsub = null;
+  }
+}
+
+// Cleanup task when leaving chat or opening new ticket
+function cleanupCurrentTask() {
+  cleanupCurrentTicket();
+  // Keep name in localStorage, do not clear ticket_id until new ticket is created
+  // We will clear it only when creating a brand new ticket from openTicket function
+}
+
+// যদি আগের টিকেট থাকে
+if (myTicketId) {
+  loadChat(myTicketId);
+} else {
+  resetFormForNewTicket();
+}
+
+window.openTicket = async function() {
+  let name = document.getElementById('f-name').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  
+  // যদি নাম readOnly থাকে এবং খালি থাকে
+  if (!name) {
+    const savedName = localStorage.getItem("ticket_name");
+    if (savedName) {
+      name = savedName;
+      document.getElementById('f-name').value = savedName;
+    }
+  }
+  
+  if (!name || !desc) { 
+    alert('নাম ও সমস্যার বিবরণ দিন'); 
+    return; 
+  }
+
+  // Clean up previous ticket
+  cleanupCurrentTask();
+  
+  // Clear old ticket id only when creating a new one to avoid conflicts
+  if (myTicketId) {
+    localStorage.removeItem('ticket_id');
+  }
+  
+  const ticketRef = push(ref(db, 'tickets'), {
+    name,
+    desc,
+    status: 'open',
+    createdAt: Date.now(),
+    lastMsg: Date.now()
+  });
+
+  myTicketId = ticketRef.key;
+  myName = name;
+  localStorage.setItem('ticket_id', myTicketId);
+  localStorage.setItem('ticket_name', myName);
+
+  // প্রথম system message
+  push(ref(db, `tickets/${myTicketId}/messages`), {
+    type: 'system',
+    msg: `টিকেট খোলা হয়েছে। সমস্যা: ${desc}`,
+    time: Date.now()
+  });
+
+  loadChat(myTicketId);
+};
+
+// Function to open new ticket form from closed screen
+window.openNewTicket = function() {
+  cleanupCurrentTask();
+  // Do not clear localStorage name, keep it for prefilling
+  // Only remove ticket_id because we are abandoning current chat
+  localStorage.removeItem('ticket_id');
+  myTicketId = null;
+  showScreen('form-screen');
+  resetFormForNewTicket();
+};
+
+function loadChat(ticketId) {
+  showScreen('chat-screen');
+  
+  // Clear container
+  const container = document.getElementById('msg-container');
+  container.innerHTML = '';
+  const loadedKeys = new Set();
+
+  // টিকেট ইনফো লোড
+  currentTicketUnsub = onValue(ref(db, `tickets/${ticketId}`), snap => {
+    const t = snap.val();
+    if (!t) {
+      // Ticket deleted
+      localStorage.removeItem('ticket_id');
+      myTicketId = null;
+      showScreen('form-screen');
+      resetFormForNewTicket();
+      return;
+    }
+    
+    document.getElementById('header-name').innerText = t.name || myName || '—';
+    document.getElementById('header-sub').innerText = t.desc ? (t.desc.length > 40 ? t.desc.slice(0,40)+'...' : t.desc) : '—';
+
+    const badge = document.getElementById('header-status');
+    const statusMap = { open: ['খোলা','status-open'], pending: ['পেন্ডিং','status-pending'], closed: ['বন্ধ','status-closed'] };
+    const [label, cls] = statusMap[t.status] || ['খোলা','status-open'];
+    badge.className = 'status-badge ' + cls;
+    badge.innerText = label;
+
+    ticketClosed = t.status === 'closed';
+    const inputBox = document.getElementById('input-box');
+    const existing = document.getElementById('closed-notice');
+    
+    if (ticketClosed) {
+      inputBox.style.display = 'none';
+      if (!existing) {
+        const notice = document.createElement('div');
+        notice.id = 'closed-notice';
+        notice.className = 'closed-notice';
+        notice.innerHTML = `
+          <span>এই টিকেটটি বন্ধ করা হয়েছে।</span>
+          <button class="primary" onclick="openNewTicket()">
+            ${App.ic('plus')}
+            নতুন টিকেট খুলুন
+          </button>
+        `;
+        document.getElementById('chat-screen').appendChild(notice);
+      }
+    } else {
+      inputBox.style.display = 'flex';
+      if (existing) existing.remove();
+    }
+  });
+
+  onChildAdded(ref(db, `tickets/${ticketId}/messages`), snap => {
+    if (loadedKeys.has(snap.key)) return;
+    loadedKeys.add(snap.key);
+    const d = snap.val();
+    const msgId = snap.key;
+
+    if (d.type === 'system') {
+      const sys = document.createElement('div');
+      sys.className = 'sys-msg';
+      sys.innerText = d.msg;
+      container.appendChild(sys);
+      container.scrollTop = container.scrollHeight;
+      return;
+    }
+
+    const isMe = d.sender === 'user';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message-wrapper';
+
+    if (!isMe) {
+      const sn = document.createElement('div');
+      sn.className = 'sender-name';
+      sn.innerText = 'অ্যাডমিন';
+      wrapper.appendChild(sn);
+    }
+
+    const div = document.createElement('div');
+    div.className = `message ${isMe ? 'me' : 'other'}`;
+    div.innerHTML = `<div>${d.msg}</div>`;
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = `info-row ${isMe ? 'me-info' : 'other-info'}`;
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'time-stamp';
+    timeSpan.innerText = formatTime(d.time);
+
+    const seenSpan = document.createElement('span');
+    seenSpan.className = 'seen-status';
+    seenSpan.innerText = 'দেখা হয়েছে';
+
+    if (!isMe && d.seenBy && !d.seenBy['user']) {
+      update(ref(db, `tickets/${ticketId}/messages/${msgId}/seenBy`), { user: true });
+    }
+
+    onValue(ref(db, `tickets/${ticketId}/messages/${msgId}/seenBy`), seenSnap => {
+      const sd = seenSnap.val() || {};
+      if (isMe && sd['admin']) seenSpan.style.display = 'block';
+    });
+
+    div.addEventListener('click', () => timeSpan.classList.toggle('show-info'));
+
+    infoDiv.appendChild(timeSpan);
+    if (isMe) infoDiv.appendChild(seenSpan);
+    wrapper.appendChild(div);
+    wrapper.appendChild(infoDiv);
+    container.appendChild(wrapper);
+    container.scrollTop = container.scrollHeight;
+  });
+
+  // Send
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('send-btn');
+
+  function sendMsg() {
+    const text = input.value.trim();
+    if (!text || ticketClosed) return;
+    push(ref(db, `tickets/${ticketId}/messages`), {
+      sender: 'user',
+      msg: text,
+      time: Date.now(),
+      seenBy: { user: true }
+    });
+    update(ref(db, `tickets/${ticketId}`), { lastMsg: Date.now() });
+    input.value = '';
+    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
+  }
+
+  // Remove old listeners
+  sendBtn.replaceWith(sendBtn.cloneNode(true));
+  const newSendBtn = document.getElementById('send-btn');
+  const newInput = document.getElementById('input');
+  
+  newSendBtn.addEventListener('click', sendMsg);
+  newInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMsg(); });
+
+  // Viewport fix
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      document.body.style.height = window.visualViewport.height + 'px';
+      container.scrollTop = container.scrollHeight;
+    });
+  }
+}
+</script>
+</body>
+</html>

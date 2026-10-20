@@ -53,6 +53,8 @@
       </div>
       <button id="bEdit" class="block" style="margin-top:16px"><span data-ic="edit"></span>পেমেন্ট নাম্বার পরিবর্তন</button>
       <button id="bOut2" class="danger block" style="margin-top:10px"><span data-ic="logout"></span>লগআউট</button>
+      <button id="bTicket" class="help block" style="margin-top:10px"><span data-ic="ticket"></span>টিকেট খুলুন</button>
+      <button id="bWa" class="help wa block" style="margin-top:10px"><span data-ic="whatsapp"></span>হোয়াটসঅ্যাপে যোগাযোগ করুন</button>
     </div>
   </section>
 </main>
@@ -84,6 +86,10 @@
 .book .bt small{display:block;font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
 .logo-sm{display:flex;width:30px;height:30px;border-radius:9px;background:var(--pri);color:var(--pri-fg);align-items:center;justify-content:center}.logo-sm .i{width:18px;height:18px}
 header.top h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* প্রোফাইলের সাপোর্ট বোতাম (টিকেট / হোয়াটসঅ্যাপ) */
+button.help{color:var(--pri);border-color:var(--pri);background:linear-gradient(var(--bg),var(--bg)) padding-box;font-weight:600}
+button.help:hover{background:var(--panel2)}
+button.help .i{width:18px;height:18px}
 /* হেডারে সম্পন্ন টাস্কের সংখ্যা */
 .cnt{display:inline-flex;align-items:center;gap:5px;flex:none;padding:4px 10px 4px 8px;border-radius:99px;background:rgba(242,210,122,.16);border:1px solid rgba(242,210,122,.55);color:#fff;line-height:1;white-space:nowrap}
 .cnt .i{width:14px;height:14px;color:#f2d27a;stroke-width:2.6}
@@ -106,6 +112,12 @@ const PM={bkash:'বিকাশ',nagad:'নগদ'};
 
 // Admin: top field to reach admin.html. User: bottom navigation (task / profile).
 $('bOut').onclick=$('bOut2').onclick=()=>App.logout();
+// সাপোর্ট: টিকেট খুলুন → support.html ; হোয়াটসঅ্যাপ → অ্যাডমিনের WhatsApp (wa.me API)
+$('bTicket').onclick=()=>location.href='support.html';
+$('bWa').onclick=()=>{
+  const m='আসসালামু আলাইকুম, আমি কিতাব প্রুফিং অ্যাপের ইউজার। নাম: '+(me.full_name||'-')+'। ফোন নাম্বার: '+(me.phone||'-')+'। আমার একটি সাহায্য প্রয়োজন।';
+  window.open('https://wa.me/'+App.ADMIN_WA+'?text='+encodeURIComponent(m),'_blank','noopener');
+};
 $('nav').hidden=false;   // টাস্ক / প্রোফাইল নেভিগেশন সবার জন্য
 if(isAdmin){ $('bAdmin').hidden=false; $('bOut').hidden=false; $('bAdmin').onclick=()=>location.href='admin.html'; $('pRole').textContent='অ্যাডমিন'; }
 App.hydrateIcons();
@@ -116,6 +128,7 @@ function tab(t){
   $('ttl').textContent=t==='task'?'কাজের তালিকা':'প্রোফাইল';
 }
 $('nTask').onclick=()=>tab('task'); $('nProf').onclick=()=>{tab('prof');loadCount();};
+if(location.hash==='#prof')tab('prof');   // support.html থেকে ফিরলে প্রোফাইল ট্যাব খুলুক
 
 // ---- আমার সম্পন্ন টাস্ক (শুধু নিজের প্রুফড পেইজ) ----
 let myCount=null;
