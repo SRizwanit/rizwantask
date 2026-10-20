@@ -23,7 +23,9 @@ body{display:flex;flex-direction:column;height:100vh;height:100dvh}
 header.top{flex:none}
 header.top h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 header.top .back{flex:none;width:36px;height:36px;padding:0;border-radius:50%}
-header.top .back .i{width:20px;height:20px;stroke-width:2.4}
+header.top .back{display:flex;align-items:center;justify-content:center;line-height:0}
+header.top .back>span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;line-height:0}
+header.top .back .i{display:block;width:20px;height:20px;stroke-width:2.4}
 
 /* ===== SCREENS ===== */
 .screen{display:none;flex-direction:column;flex:1;min-height:0;height:100%}
@@ -78,7 +80,9 @@ header.top .back .i{width:20px;height:20px;stroke-width:2.4}
 #send-btn{flex:none;width:42px;height:42px;padding:0;border-radius:50%;border:0;color:var(--pri-fg);
   background:linear-gradient(135deg,var(--pri),var(--pri2));box-shadow:0 3px 12px var(--glow)}
 #send-btn:hover{filter:brightness(1.06)}
-#send-btn .i{width:19px;height:19px;stroke-width:2.3}
+#send-btn{display:flex;align-items:center;justify-content:center;line-height:0}
+#send-btn>span{display:flex;align-items:center;justify-content:center;line-height:0}
+#send-btn .i{display:block;width:19px;height:19px;stroke-width:2.3}
 </style>
 </head>
 <body>
