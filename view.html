@@ -496,9 +496,16 @@ window.__KP_READY = (async () => {
   document.title = CTX.book.name + ' - কিতাব প্রুফিং';
   (() => {
     const b = CTX.book, st = CTX.settings || {};
-    cfg.repo = trimSl(b.github_username) + '/' + trimSl(b.repo_name);
-    cfg.branch = (b.branch || '').trim();
+    // কিতাবে ফাঁকা থাকলে অ্যাডমিনের ডিফল্ট (app_settings), সেটাও ফাঁকা থাকলে SunniPedia/pdftojpg
+    const gu = trimSl(b.github_username) || trimSl(st.github_username) || 'SunniPedia';
+    const gr = trimSl(b.repo_name) || trimSl(st.repo_name) || 'pdftojpg';
+    cfg.repo = gu + '/' + gr;
+    cfg.branch = (b.branch || st.branch || '').trim();
     cfg.book = trimSl(b.folder || b.name);                  // → <কিতাব>_pages, <কিতাব>_texts, <কিতাব>_proofed.json
+    if (st.pages_dir) cfg.pagesDir = trimSl(st.pages_dir);
+    if (st.texts_dir) cfg.textsDir = trimSl(st.texts_dir);
+    if (st.proof_file) cfg.proofFile = st.proof_file.trim().replace(/^\/+/, '');
+    if (st.proof_dir) cfg.proofDir = trimSl(st.proof_dir);
     if (st.github_token) cfg.token = st.github_token;
     [1, 2].forEach(n => {
       const c = cfg['api' + n];
