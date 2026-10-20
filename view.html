@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>কিতাব প্রুফিং</title>
+<script src="theme-init.js"></script>
 <!-- অনলাইন ফন্ট: UI = Anek Bangla, প্রুফিং টেক্সট = Noto Serif Bengali, আরবি = Noto Naskh Arabic -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,9 +25,11 @@
     --txt:"Noorehuda","Noto Serif Bengali","Noto Naskh Arabic","Kalpurush","SolaimanLipi",serif;
   }
   @media (prefers-color-scheme:dark){
-    :root{--bg:#14161a;--fg:#e8eaed;--muted:#9aa3b2;--line:#2a2e36;--panel:#1d2127;--panel2:#262b33;
+    :root:not([data-theme=light]){--bg:#14161a;--fg:#e8eaed;--muted:#9aa3b2;--line:#2a2e36;--panel:#1d2127;--panel2:#262b33;
           --pri:#7aa7ff;--pri-fg:#0b0d10;--ok:#6fd08c;--warn:#fbbf24;--err:#f87171;--hl:rgba(250,204,21,.26);--hlw:rgba(251,146,60,.5)}
   }
+  :root[data-theme=dark]{--bg:#14161a;--fg:#e8eaed;--muted:#9aa3b2;--line:#2a2e36;--panel:#1d2127;--panel2:#262b33;
+          --pri:#7aa7ff;--pri-fg:#0b0d10;--ok:#6fd08c;--warn:#fbbf24;--err:#f87171;--hl:rgba(250,204,21,.26);--hlw:rgba(251,146,60,.5)}
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{display:flex;flex-direction:column;height:100dvh;background:var(--bg);color:var(--fg);
@@ -44,7 +47,8 @@
   button.primary{background:var(--pri);border-color:var(--pri);color:var(--pri-fg);font-weight:600}
   button.primary:hover{filter:brightness(1.06)}
   button.on{background:var(--ok);border-color:var(--ok);color:#fff}
-  @media (prefers-color-scheme:dark){button.on{color:#0b0d10}}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]) button.on{color:#0b0d10}}
+  :root[data-theme=dark] button.on{color:#0b0d10}
   button:disabled{opacity:.5;cursor:default}
   /* ক্লিক রিপল ইফেক্ট (Material ripple): চাপলে চাপার বিন্দু থেকে বৃত্তাকার ঢেউ ছড়ায় */
   button,.dd-it{position:relative;overflow:hidden;isolation:isolate}
@@ -53,7 +57,8 @@
   button.on .rip{background:rgba(220,252,231,.9)}
   @keyframes rip{0%{transform:scale(0);opacity:.9}65%{opacity:.55}100%{transform:scale(1);opacity:0}}
   button:active:not(:disabled),.dd-it:active{box-shadow:inset 0 0 0 999px rgba(34,197,94,.18)}
-  @media (prefers-color-scheme:dark){.rip{background:rgba(74,222,128,.6)}button.on .rip{background:rgba(21,128,61,.55)}}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .rip{background:rgba(74,222,128,.6)}:root:not([data-theme=light]) button.on .rip{background:rgba(21,128,61,.55)}}
+  :root[data-theme=dark] .rip{background:rgba(74,222,128,.6)}:root[data-theme=dark] button.on .rip{background:rgba(21,128,61,.55)}
   @media (prefers-reduced-motion:reduce){.rip{display:none}}
   select:focus,input:focus,button:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
 
@@ -86,7 +91,8 @@
   /* অটো OCR টগল: সবুজ = চালু, লাল = বন্ধ */
   #btnAutoApi.on{background:var(--ok);border-color:var(--ok);color:#fff}
   #btnAutoApi.off{background:var(--err);border-color:var(--err);color:#fff}
-  @media (prefers-color-scheme:dark){#btnAutoApi.on,#btnAutoApi.off{color:#0b0d10}}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]) #btnAutoApi.on,:root:not([data-theme=light]) #btnAutoApi.off{color:#0b0d10}}
+  :root[data-theme=dark] #btnAutoApi.on,:root[data-theme=dark] #btnAutoApi.off{color:#0b0d10}
 
   /* নিজস্ব ড্রপডাউন (পপআপ তালিকাতেও একই ফন্ট) */
   .dd-btn{justify-content:space-between;gap:6px;text-align:left}
@@ -655,6 +661,8 @@ window.__KP_READY = (async () => {
   // ড্রপডাউন, আগে/পরে বাটন, নম্বরে যাও ও "পরের অপ্রুফড"-এ আসে না; অপ্রুফড পেইজগুলো সবার জন্য আগের মতোই খোলা।
   const ME = CTX.uid, BOOK_ID = String(CTX.book.id), IS_ADMIN = !!CTX.isAdmin;
   let owners = new Map();      // stem → যে ইউজার প্রুফড করেছে (user_id)
+  let reviews = new Map();     // stem → {s: pending/approved/correction, note} (অ্যাডমিন রিভিউ)
+  const wantPage = new URLSearchParams(location.search).get('page');   // task.html-এর "সংশোধন দরকার" লিংক থেকে সরাসরি পেইজে
   let ownerNames = new Map();  // user_id → নাম (শুধু অ্যাডমিনের জন্য)
   let proofDb = true;          // page_proofs টেবিল আছে কি না (না থাকলে পুরনো আচরণ)
   const encU = encodeURIComponent;
@@ -929,6 +937,7 @@ window.__KP_READY = (async () => {
       else if (ta.disabled) t += ' • লোড হচ্ছে…';
       else t += d ? ' • অসংরক্ষিত' : (sha ? ' • সেভড' : ' • টেক্সট নেই (পেস্ট করে সেভ করুন)');
       if (proofed.has(stem)) t += ' • প্রুফড' + ownerTag(stem);
+      { const rv = reviews.get(stem); if (rv && owners.get(stem) === ME) t += rv.s === 'approved' ? ' • অনুমোদিত ✔' : rv.s === 'correction' ? ' • সংশোধন দরকার' + (rv.note ? ' (' + rv.note + ')' : '') : ' • রিভিউ বাকি'; }
       if (!apiEnabled) t += ' • এপি আই বন্ধ';
       if (apiRun) t += ' • ' + API_NAME[apiRun.n] + ' চলছে' + (apiRun.stem !== stem ? ' (' + apiRun.stem + ')' : '') + (apiRun.chars ? ' ' + apiRun.chars + ' অক্ষর' : '') + '…';
       st.textContent = t;
@@ -1275,7 +1284,10 @@ window.__KP_READY = (async () => {
   async function fetchProofRows() {
     const rows = [], PAGE = 1000;
     for (let off = 0; ; off += PAGE) {
-      const r = await App.sb.get('page_proofs?book_id=eq.' + encU(BOOK_ID) + '&select=stem,user_id&order=stem.asc&limit=' + PAGE + '&offset=' + off);
+      const q = 'page_proofs?book_id=eq.' + encU(BOOK_ID) + '&order=stem.asc&limit=' + PAGE + '&offset=' + off;
+      let r;
+      try { r = await App.sb.get(q + '&select=stem,user_id,review_status,review_note'); }
+      catch (e) { if (/review_|42703|PGRST204/i.test(e.message)) r = await App.sb.get(q + '&select=stem,user_id'); else throw e; }
       rows.push(...r);
       if (r.length < PAGE) break;
     }
@@ -1288,7 +1300,8 @@ window.__KP_READY = (async () => {
     catch (e) { if (isNoTable(e)) { proofDb = false; owners = new Map(); return 'none'; } return false; }
     proofDb = true;
     const m = new Map();
-    rows.forEach(r => { m.set(r.stem, r.user_id); proofed.add(r.stem); });
+    reviews = new Map();
+    rows.forEach(r => { m.set(r.stem, r.user_id); proofed.add(r.stem); if (r.review_status) reviews.set(r.stem, {s: r.review_status, note: r.review_note || ''}); });
     owners.forEach((_, stem) => { if (!m.has(stem)) proofed.delete(stem); });   // মালিক প্রুফড তুলে নিয়েছে
     owners = m;
     if (IS_ADMIN) {
@@ -1374,6 +1387,10 @@ window.__KP_READY = (async () => {
             }
           }
         } else {
+          if (!IS_ADMIN && reviews.get(stem) && reviews.get(stem).s === 'approved') {
+            toast('এই পেইজ অ্যাডমিন অনুমোদন করেছেন — প্রুফড চিহ্ন তোলা যাবে না', true, 5000);
+            return false;
+          }
           await App.sb.del('page_proofs?book_id=eq.' + encU(BOOK_ID) + '&stem=eq.' + encU(stem) + (IS_ADMIN ? '' : '&user_id=eq.' + encU(ME)));
           owners.delete(stem);
         }
@@ -1389,7 +1406,8 @@ window.__KP_READY = (async () => {
       refresh(); return false;
     }
     if (val) proofed.add(stem); else proofed.delete(stem);
-    if (proofDb) loadDone();
+    if (proofDb) { loadDone(); try { App.log(val ? 'proof' : 'unproof', (CTX.book.name || BOOK_ID) + ' / ' + stem); } catch (e) {} }
+    if (!val) reviews.delete(stem); else if (!reviews.has(stem)) reviews.set(stem, {s: 'pending', note: ''});
     if (jerr) toast('প্রুফড চিহ্ন সংরক্ষিত হয়েছে, কিন্তু GitHub-এর প্রুফড ফাইল হালনাগাদ হয়নি: ' + jerr.message, true, 6000);
     refresh();
     return true;
@@ -1459,7 +1477,7 @@ window.__KP_READY = (async () => {
       if (pr === false) throw new Error('প্রুফড মালিকানা আনা যায়নি (নেটওয়ার্ক) — রিলোড চাপুন');
       if (pr === 'none') toast(IS_ADMIN ? 'Supabase-এ page_proofs টেবিল নেই — supabase_page_proofs.sql চালান; তার আগে ইউজার-ভিত্তিক লুকানো কাজ করবে না' : 'প্রুফড মালিকানা সক্রিয় নেই (অ্যাডমিনকে জানান)', true, 7000);
       cur = -1; renderSelect();
-      let start = images.findIndex(im => im.stem === cfg.last);   // যেখানে ছিলেন সেখান থেকে শুরু
+      let start = images.findIndex(im => im.stem === (wantPage || cfg.last));   // লিংকের পেইজ, নইলে যেখানে ছিলেন সেখান থেকে শুরু
       if (start < 0 || isHid(start)) start = stepVis(-1, 1);       // নইলে প্রথম দৃশ্যমান পেইজ
       if (start < 0) { showNone(); return; }
       restoreOnce = true;
@@ -2321,6 +2339,14 @@ window.__KP_READY = (async () => {
       if (needProof) {
         loadingStep(++k, 'প্রুফড চিহ্নিত হচ্ছে…');
         if (!(await setProofed(stem, true))) { loadingHide(); return; }
+      } else if (proofDb && reviews.get(stem) && reviews.get(stem).s === 'correction' && owners.get(stem) === ME) {
+        // অ্যাডমিন "সংশোধন দরকার" দিয়েছিলেন → ঠিক করে আবার জমা: রিভিউ আবার "বাকি"
+        try {
+          await App.sb.patch('page_proofs?book_id=eq.' + encU(BOOK_ID) + '&stem=eq.' + encU(stem) + '&user_id=eq.' + encU(ME), {review_status: 'pending', review_note: null, reviewed_at: null});
+          reviews.set(stem, {s: 'pending', note: ''}); updateStatus();
+          try { App.log('resubmit', (CTX.book.name || BOOK_ID) + ' / ' + stem); } catch (e) {}
+          toast('সংশোধিত পেইজ আবার রিভিউয়ের জন্য জমা হয়েছে');
+        } catch (e) { toast('পুনরায় জমা ব্যর্থ: ' + e.message, true); }
       }
       if (!isLast) {
         loadingStep(++k, 'পরের পেইজ লোড হচ্ছে…');

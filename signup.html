@@ -2,6 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="utf-8">
+<script src="theme-init.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>প্রোফাইল তৈরি - কিতাব প্রুফিং</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,7 +55,7 @@ $('bSubmit').onclick=async()=>{
     const salt=App.newSalt(),hash=await App.hashPin(ctx.pin,salt);
     const rows=await App.sb.post('app_users',{phone:ctx.phone,full_name:name,payment_method:pm(),payment_number:v.phone,password_salt:salt,password_hash:hash,device_id:dev});
     sessionStorage.removeItem('kp_signup');
-    App.session.set(rows[0]);location.replace('task.html');
+    App.session.set(rows[0]);App.log('signup','নতুন অ্যাকাউন্ট',{id:rows[0].id,name:name}).finally(()=>location.replace('task.html'));
   }catch(e){
     err(/duplicate|23505/i.test(e.message)?'এই নাম্বার বা ডিভাইসে ইতিমধ্যে একাউন্ট আছে':e.message);
     $('bSubmit').disabled=false;$('spin').classList.remove('on');

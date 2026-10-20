@@ -19,6 +19,7 @@ const sb={
   get:p=>req('GET',p),
   post:(p,b)=>req('POST',p,b,'return=representation'),
   patch:(p,b)=>req('PATCH',p,b,'return=representation'),
+  patchMin:(p,b)=>req('PATCH',p,b,'return=minimal'),
   upsert:(p,b)=>req('POST',p,b,'resolution=merge-duplicates,return=representation'),
   del:p=>req('DELETE',p)
 };
@@ -91,8 +92,85 @@ async function requireAuth({admin=false}={}){
   try{const r=await sb.get('app_users?id=eq.'+enc(s.id)+'&limit=1');u=r[0]||null;}
   catch(e){toast('নেটওয়ার্ক সমস্যা: '+e.message,true);return new Promise(()=>{});}
   if(!u||deviceEmpty(u.device_id)||u.device_id!==deviceId()){logout();return new Promise(()=>{});}
+  if(u.is_blocked&&!isAdminPhone(u.phone)){blockedScreen(u);return new Promise(()=>{});}
   if(admin&&!isAdminPhone(u.phone)){location.replace('task.html');return new Promise(()=>{});}
+  touchActive(u);
   return u;}
+/* ব্লক করা ইউজারের পূর্ণ-পর্দা বার্তা */
+function blockedScreen(u){
+  document.body.innerHTML='<div class="wrap"><div class="card" style="text-align:center;margin-top:40px"><div class="av" style="background:var(--err)">!</div>'
+   +'<h3 style="margin:0 0 8px">আপনার অ্যাকাউন্ট ব্লক করা হয়েছে</h3>'
+   +'<p class="hint">'+esc(u.blocked_reason||'অ্যাডমিন আপনার অ্যাকাউন্টটি সাময়িকভাবে বন্ধ করেছেন।')+'</p>'
+   +'<button id="bkWa" class="help block" style="margin-top:14px">হোয়াটসঅ্যাপে অ্যাডমিনের সাথে যোগাযোগ</button>'
+   +'<button id="bkOut" class="danger block" style="margin-top:10px">লগআউট</button></div></div>';
+  document.getElementById('bkOut').onclick=logout;
+  document.getElementById('bkWa').onclick=()=>window.open('https://wa.me/'+ADMIN_WA+'?text='+enc('আসসালামু আলাইকুম, আমার অ্যাকাউন্ট ব্লক দেখাচ্ছে। নাম: '+(u.full_name||'-')+', ফোন: '+(u.phone||'-')),'_blank','noopener');
+}
+/* সর্বশেষ সক্রিয় সময় (৫ মিনিটে একবার; কলাম না থাকলে নীরবে বাদ) */
+function touchActive(u){
+  const k='kp_touch_v1',n=Date.now();
+  try{if(n-(+localStorage.getItem(k)||0)<300000)return;localStorage.setItem(k,String(n));}catch(e){}
+  sb.patch('app_users?id=eq.'+enc(u.id),{last_active_at:new Date(n).toISOString()}).catch(()=>{});
+}
+/* কার্যকলাপের লগ — ব্যর্থ হলেও অ্যাপ থামে না (activity_log টেবিল না থাকলে বাদ) */
+function log(action,detail,who){
+  try{
+    const s=who||session.get()||{};
+    const row={user_id:s.id!=null?String(s.id):null,user_name:s.name||s.full_name||'',action,detail:String(detail==null?'':detail).slice(0,500)};
+    return fetch(SB_URL+'/rest/v1/activity_log',{method:'POST',keepalive:true,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)}).catch(()=>{});
+  }catch(e){return Promise.resolve();}
+}
+/* ---- সংখ্যা / টাকা / তারিখ (বাংলা) ---- */
+const bn=n=>Number(n||0).toLocaleString('bn-BD');
+const r2=x=>Math.round((Number(x)||0)*100)/100;
+const money=x=>r2(x).toLocaleString('bn-BD',{minimumFractionDigits:2,maximumFractionDigits:2})+' ৳';
+const fmtD=t=>t?new Date(t).toLocaleDateString('bn-BD',{day:'numeric',month:'short',year:'numeric'}):'-';
+const fmtDT=t=>t?new Date(t).toLocaleString('bn-BD',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'-';
+const startOfDay=(d)=>{const x=d?new Date(d):new Date();x.setHours(0,0,0,0);return x;};
+/* ---- আয়ের হিসাব ----
+   রেট: কিতাবের page_rate; না থাকলে সেটিংসের ডিফল্ট page_rate (০.২০ ৳)। আয় গোনা হয় শুধু "অনুমোদিত" পেইজে
+   (অনুমোদনের সময়ের রেট proofs.rate-এ থাকে)। অপেক্ষমাণ পেইজ আলাদা দেখায়; "সংশোধন দরকার" পেইজে আয় নেই। */
+const DEF_RATE=0.2, DEF_MIN=50;
+function rateOf(book,S){
+  const r=book&&book.page_rate; if(r!=null&&r!==''&&Number.isFinite(Number(r)))return Number(r);
+  const d=S&&S.page_rate; return d!=null&&d!==''&&Number.isFinite(Number(d))?Number(d):DEF_RATE;
+}
+function summarize(proofs,booksById,S,payments){
+  const o={pages:0,approved:0,pending:0,correction:0,earned:0,pendingAmt:0,paid:0,requested:0,available:0,byBook:{}};
+  (proofs||[]).forEach(p=>{
+    const st=p.review_status||'pending',b=booksById[String(p.book_id)],cur=rateOf(b,S);
+    const bb=o.byBook[p.book_id]||(o.byBook[p.book_id]={n:0,approved:0,pending:0,correction:0,earned:0});
+    o.pages++;bb.n++;
+    if(st==='approved'){const r=p.rate!=null&&p.rate!==''?Number(p.rate):cur;o.approved++;bb.approved++;o.earned+=r;bb.earned+=r;}
+    else if(st==='correction'){o.correction++;bb.correction++;}
+    else{o.pending++;bb.pending++;o.pendingAmt+=cur;}
+  });
+  (payments||[]).forEach(x=>{if(x.status==='paid')o.paid+=Number(x.amount)||0;else if(x.status==='requested')o.requested+=Number(x.amount)||0;});
+  o.earned=r2(o.earned);o.pendingAmt=r2(o.pendingAmt);o.paid=r2(o.paid);o.requested=r2(o.requested);
+  o.available=Math.max(0,r2(o.earned-o.paid-o.requested));
+  return o;
+}
+/* সব সারি পেজিনেট করে আনে (১০০০টি করে) */
+async function getAll(path,max){
+  const out=[],P=1000,sep=path.includes('?')?'&':'?';
+  for(let off=0;off<(max||200000);off+=P){const r=await sb.get(path+sep+'limit='+P+'&offset='+off);out.push(...r);if(r.length<P)break;}
+  return out;
+}
+/* ---- থিম: auto (সিস্টেম) → light → dark ---- */
+const TK='kp_theme_v1';
+const theme={
+  get(){try{const t=localStorage.getItem(TK);return t==='dark'||t==='light'?t:'auto';}catch(e){return'auto';}},
+  set(t){try{if(t==='auto')localStorage.removeItem(TK);else localStorage.setItem(TK,t);}catch(e){}
+    if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);},
+  next(){return({auto:'light',light:'dark',dark:'auto'})[theme.get()];},
+  label(t){return({auto:'সিস্টেম অনুযায়ী',light:'লাইট মোড',dark:'ডার্ক মোড'})[t||theme.get()];}
+};
+function mountTheme(root){
+  (root||document).querySelectorAll('[data-theme-toggle]').forEach(b=>{
+    const paint=()=>{const t=theme.get();b.innerHTML=ic(t==='dark'?'moon':t==='light'?'sun':'auto');b.title='থিম: '+theme.label(t)+' (বদলাতে চাপুন)';b.setAttribute('aria-label',b.title);};
+    b.onclick=()=>{theme.set(theme.next());paint();toast('থিম: '+theme.label());};paint();
+  });
+}
 
 /* ---- UI helpers ---- */
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -119,14 +197,26 @@ const ICONS={
  ticket:'<path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 5v2.5M14 10.75v2.5M14 16.5V19"/>',
  whatsapp:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M9.4 8.6c-.3.5-.3 1.3.5 2.6s2 2.2 3.3 2.6c.6.2 1.2-.1 1.5-.6l.3-.6-1.6-.9-.6.6c-.8-.3-1.5-1-1.9-1.8l.6-.6-.9-1.6z"/>',
  headset:'<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
+ moon:'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+ auto:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+ trophy:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+ bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+ chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+ list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/>',
+ ban:'<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>',
+ x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+ clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+ info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
  send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>'
 };
 const LOGO='<svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 61V35a23 23 0 0 1 46 0V61M4 61H60" stroke-width="2" style="stroke:#f2d27a"/><g transform="translate(32 25)" style="stroke:#f2d27a" stroke-width="1.2"><circle r="1.4"/><ellipse rx="1.7" ry="5"/><ellipse rx="1.7" ry="5" transform="rotate(45)"/><ellipse rx="1.7" ry="5" transform="rotate(90)"/><ellipse rx="1.7" ry="5" transform="rotate(135)"/></g><path d="M32 52V38M32 38C28 35.5 22 35.5 17 37V51C22 49.5 28 49.5 32 52M32 38C36 35.5 42 35.5 47 37V51C42 49.5 36 49.5 32 52" stroke-width="2.2" style="stroke:#f3fff9"/><path d="M19 57C25 56.5 29 55 32 52C35 55 39 56.5 45 57" stroke-width="1.8" style="stroke:#f2d27a"/><path d="M36.5 44l2.8 2.8 4.6-5.8" stroke-width="2.2" style="stroke:#f2d27a"/></g><path d="M35 1.4A5.5 5.5 0 1 0 35 10.6A4.6 4.6 0 1 1 35 1.4z" style="fill:#f2d27a"/><path class="mk-sp" d="M40.50 3.30 L41.18 5.07 L43.07 5.17 L41.59 6.36 L42.09 8.18 L40.50 7.15 L38.91 8.18 L39.41 6.36 L37.93 5.17 L39.82 5.07z" style="fill:#fff7d6"/></svg>';
 const ic=(n,c)=>n==='mark'?LOGO:'<svg class="i '+(c||'')+'" viewBox="0 0 24 24" aria-hidden="true">'+(ICONS[n]||'')+'</svg>';
-function hydrateIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(e=>{e.innerHTML=ic(e.dataset.ic,e.dataset.cls)+(e.innerHTML||'');e.removeAttribute('data-ic');});}
+function hydrateIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(e=>{e.innerHTML=ic(e.dataset.ic,e.dataset.cls)+(e.innerHTML||'');e.removeAttribute('data-ic');});mountTheme(root);}
 const $=id=>document.getElementById(id);
 function btnBusy(b,on){if(b)b.disabled=!!on;}
 
 window.App={sb,Phone,isAdminPhone,hashPin,newSalt,verifyPin,hasPin,deviceId,deviceEmpty,findUserByPhone,findUserByDevice,requestOtp,verifyOtp,
-  session,logout,requireAuth,esc,toast,ic,hydrateIcons,$,btnBusy,ADMIN_PHONE,ADMIN_WA};
+  session,logout,requireAuth,esc,toast,ic,hydrateIcons,$,btnBusy,ADMIN_PHONE,ADMIN_WA,
+  log,bn,r2,money,fmtD,fmtDT,startOfDay,rateOf,summarize,getAll,DEF_RATE,DEF_MIN,theme,mountTheme,enc};
 })();

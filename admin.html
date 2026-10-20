@@ -2,6 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="utf-8">
+<script src="theme-init.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>অ্যাডমিন প্যানেল - কিতাব প্রুফিং</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,23 +32,114 @@
 <header class="top">
   <button id="bBack" class="sm"><span data-ic="left"></span>টাস্ক</button>
   <h2>অ্যাডমিন প্যানেল</h2>
+  <button id="bTheme" class="sm" data-theme-toggle title="থিম"></button>
   <button id="bOut" class="sm"><span data-ic="logout"></span>লগআউট</button>
 </header>
 <main class="wrap wide">
   <div class="tabs">
-    <button id="tUsers" class="on"><span data-ic="users"></span>ব্যবহারকারী</button>
+    <button id="tDash" class="on"><span data-ic="chart"></span>ড্যাশবোর্ড</button>
+    <button id="tUsers"><span data-ic="users"></span>ব্যবহারকারী</button>
+    <button id="tReview"><span data-ic="check"></span>রিভিউ<span class="tbadge" id="bgReview" hidden></span></button>
+    <button id="tPay"><span data-ic="wallet"></span>পেমেন্ট<span class="tbadge" id="bgPay" hidden></span></button>
     <button id="tBooks"><span data-ic="book"></span>কিতাব</button>
+    <button id="tNotice"><span data-ic="bell"></span>নোটিশ</button>
+    <button id="tSupp"><span data-ic="headset"></span>সাপোর্ট<span class="tbadge" id="bgSupp" hidden></span></button>
+    <button id="tLog"><span data-ic="list"></span>লগ</button>
     <button id="tSet"><span data-ic="settings"></span>সেটিংস</button>
   </div>
 
+
+  <!-- DASHBOARD -->
+  <section id="pDash">
+    <div class="row" style="margin-bottom:12px"><b style="flex:1">ড্যাশবোর্ড</b><span class="sub" id="dAt"></span>
+      <button id="dReload" class="sm" title="রিফ্রেশ"><span data-ic="refresh"></span></button></div>
+    <div class="tiles" id="dTiles"></div>
+    <div class="card" style="margin-bottom:14px">
+      <b>লিডারবোর্ড</b>
+      <div class="chips" id="dChips" style="margin-top:10px"><button data-p="day" class="on">আজ</button><button data-p="week">এই সপ্তাহ</button><button data-p="all">সব সময়</button></div>
+      <div id="dLb"></div>
+    </div>
+    <div class="card">
+      <b>সক্রিয়তার রিপোর্ট</b>
+      <div class="chips" id="rChips" style="margin-top:10px"><button data-f="all" class="on">সবাই</button><button data-f="act">সক্রিয় (৭ দিনে কাজ করেছে)</button><button data-f="idle">নিষ্ক্রিয়</button></div>
+      <div class="tbw"><table class="tb" id="rTbl"></table></div>
+    </div>
+  </section>
+
   <!-- USERS -->
-  <section id="pUsers">
+  <section id="pUsers" hidden>
     <div class="row" style="margin-bottom:12px">
       <input id="uq" type="search" placeholder="নাম বা নাম্বার দিয়ে খুঁজুন" style="flex:1;min-width:200px">
       <span class="badge" id="uCount"></span>
       <button id="uReload" class="sm"><span data-ic="refresh"></span></button>
     </div>
     <div id="uList"></div>
+  </section>
+
+
+  <!-- REVIEW -->
+  <section id="pReview" hidden>
+    <div id="rvWarn"></div>
+    <div class="row" style="margin-bottom:10px">
+      <select id="rvSt" class="sm"><option value="pending">রিভিউ বাকি</option><option value="correction">সংশোধন দরকার</option><option value="approved">অনুমোদিত</option><option value="">সব</option></select>
+      <select id="rvUser" class="sm" style="max-width:170px"></select>
+      <select id="rvBook" class="sm" style="max-width:170px"></select>
+      <span class="badge" id="rvCount"></span>
+      <button id="rvReload" class="sm" title="রিফ্রেশ"><span data-ic="refresh"></span></button>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <button id="rvAll" class="sm">সব নির্বাচন</button>
+      <button id="rvOkSel" class="sm ok"><span data-ic="check"></span>নির্বাচিত অনুমোদন</button>
+      <button id="rvOkAll" class="sm ok" title="বর্তমান ফিল্টারের সব পেইজ">ফিল্টারের সব অনুমোদন</button>
+    </div>
+    <div id="rvList"></div>
+    <button id="rvMore" class="block" hidden>আরও দেখান</button>
+  </section>
+
+  <!-- PAYMENTS -->
+  <section id="pPay" hidden>
+    <div class="tiles" id="pyTiles"></div>
+    <div class="chips" id="pyChips"><button data-s="requested" class="on">অপেক্ষমাণ</button><button data-s="paid">পরিশোধিত</button><button data-s="rejected">বাতিল</button><button data-s="">সব</button></div>
+    <div id="pyList"></div>
+  </section>
+
+  <!-- NOTICES -->
+  <section id="pNotice" hidden style="max-width:640px">
+    <div class="card" style="margin-bottom:16px">
+      <b>নতুন ঘোষণা / নোটিশ পাঠান</b>
+      <p class="hint">ইউজারের task.html-এ একটি ডায়ালগ হয়ে আসবে (একবার দেখানোর পর আর আসবে না; প্রোফাইলে "নোটিশ ও ঘোষণা" থেকে আবার দেখা যায়)।</p>
+      <label class="f" for="ntTo">কাকে</label><select id="ntTo"></select>
+      <label class="f" for="ntTitle">শিরোনাম *</label><input id="ntTitle" type="text" maxlength="120">
+      <label class="f" for="ntBody">বিস্তারিত</label><textarea id="ntBody" rows="5"></textarea>
+      <div class="err" id="ntErr"></div>
+      <button id="ntSend" class="primary block"><span data-ic="send"></span>পাঠান</button>
+    </div>
+    <b style="display:block;margin-bottom:8px">পাঠানো নোটিশ</b>
+    <div id="ntList"></div>
+  </section>
+
+  <!-- SUPPORT TICKETS -->
+  <section id="pSupp" hidden>
+    <div class="row" style="margin-bottom:10px">
+      <input id="spQ" type="search" class="sm" placeholder="uid / নাম / ফোন / বিবরণ দিয়ে ফিল্টার" style="flex:1;min-width:190px;width:auto">
+      <select id="spUser" class="sm" style="max-width:170px"></select>
+      <select id="spSt" class="sm"><option value="">সব স্ট্যাটাস</option><option value="open">খোলা</option><option value="pending">পেন্ডিং</option><option value="closed">বন্ধ</option></select>
+      <span class="badge" id="spCount"></span>
+    </div>
+    <div class="hint" id="spNote" style="margin-bottom:8px"></div>
+    <div id="spList"></div>
+  </section>
+
+  <!-- ACTIVITY LOG -->
+  <section id="pLog" hidden>
+    <div class="row" style="margin-bottom:12px">
+      <select id="lgUser" class="sm" style="max-width:190px"></select>
+      <select id="lgAct" class="sm"></select>
+      <span class="badge" id="lgCount"></span>
+      <button id="lgReload" class="sm" title="রিফ্রেশ"><span data-ic="refresh"></span></button>
+    </div>
+    <div class="tbw"><table class="tb" id="lgTbl"></table></div>
+    <button id="lgMore" class="block" style="margin-top:10px" hidden>আরও দেখান</button>
   </section>
 
   <!-- BOOKS -->
@@ -60,6 +152,15 @@
 
   <!-- SETTINGS -->
   <section id="pSet" hidden style="max-width:640px">
+    <div class="card" style="margin-bottom:16px">
+      <b>আয় ও রিভিউ সেটিংস</b>
+      <p class="hint">কিতাবে আলাদা রেট না দিলে এই ডিফল্ট রেট প্রযোজ্য। আয় গোনা হয় শুধু অনুমোদিত পেইজে; অনুমোদনের সময়ের রেট পেইজে সংরক্ষিত হয়, তাই পরে রেট বদলালে পুরনো অনুমোদিত পেইজের আয় বদলায় না।</p>
+      <label class="f" for="sRate">ডিফল্ট রেট — প্রতি পেইজ (৳)</label><input id="sRate" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0.20">
+      <label class="f" for="sMin">ন্যূনতম পেমেন্ট রিকোয়েস্ট (৳)</label><input id="sMin" type="number" step="1" min="0" inputmode="decimal" placeholder="50">
+      <label class="f" for="sWpct">ভুলের সতর্কবার্তা: সংশোধনের হার (%) এর বেশি হলে</label><input id="sWpct" type="number" step="1" min="1" max="100" placeholder="20">
+      <label class="f" for="sWmin">…কমপক্ষে এতগুলো পেইজ রিভিউ হওয়ার পর</label><input id="sWmin" type="number" step="1" min="1" placeholder="5">
+      <button id="sPaySave" class="primary block" style="margin-top:16px">আয় সেটিংস সংরক্ষণ</button>
+    </div>
     <div class="card" style="margin-bottom:16px">
       <div class="row"><b style="flex:1">এপি আই নিয়ন্ত্রণ (চালু / বন্ধ)</b><span class="apistate on" id="sApiState">চালু</span></div>
       <p class="hint">বন্ধ করলে view.html-এ এপি আই - ১ (ছবি থেকে টেক্সট, অটো OCR সহ) ও এপি আই - ২ (প্রুফিং) কেউই চালাতে পারবে না — টেক্সট আর নিজে থেকে আসবে না, পেইজের স্ট্যাটাস লাইনে <b>"টেক্সট নেই (পেস্ট করে সেভ করুন) • এপি আই বন্ধ"</b> দেখাবে। টগল করলেই সাথে সাথে সংরক্ষিত হয় (ইউজাররা সর্বোচ্চ ~৩০ সেকেন্ডের মধ্যে বা পেইজে ফিরলেই নতুন অবস্থা পায়)।</p>
@@ -97,6 +198,9 @@
   <label class="f" for="fAuth">কিতাবের লেখকের নাম</label><input id="fAuth" type="text">
   <label class="f" for="fCover">কিতাবের ছবির লিংক</label><input id="fCover" type="url" placeholder="https://...">
   <label class="f" for="fPdf">কিতাবের পিডিএফ লিংক</label><input id="fPdf" type="url" placeholder="https://...">
+  <label class="f" for="fRate">পেইজ প্রতি রেট (৳) — ফাঁকা = ডিফল্ট রেট</label><input id="fRate" type="number" step="0.01" min="0" inputmode="decimal">
+  <label class="f" for="fTot">মোট পেইজ সংখ্যা (অগ্রগতির বারের জন্য)</label>
+  <div class="row" style="flex-wrap:nowrap"><input id="fTot" type="number" min="0" step="1" inputmode="numeric"><button id="fCount" type="button" class="sm" title="GitHub ফোল্ডার থেকে ছবির সংখ্যা গুনুন">গুনুন</button></div>
   <label class="f" for="fGu">GitHub Username (ফাঁকা = ডিফল্ট)</label><input id="fGu" type="text" autocapitalize="off">
   <label class="f" for="fRepo">Repo Name (ফাঁকা = ডিফল্ট)</label><input id="fRepo" type="text" autocapitalize="off">
   <label class="f" for="fBr">Branch (ফাঁকা = ডিফল্ট)</label><input id="fBr" type="text" autocapitalize="off" placeholder="main">
@@ -121,6 +225,24 @@
   <div class="acts"><button id="pdCancel">বন্ধ</button><button id="pdSet" class="primary">নতুন PIN সেট</button></div>
 </dialog>
 
+<!-- জেনেরিক ইনপুট ডায়ালগ (কারণ / নোট) -->
+<dialog id="akDlg">
+  <h3 id="akT"></h3>
+  <label class="f" for="akV" id="akL"></label>
+  <textarea id="akV" rows="3"></textarea>
+  <div class="err" id="akErr"></div>
+  <div class="acts"><button id="akNo">বন্ধ</button><button id="akOk" class="primary">ঠিক আছে</button></div>
+</dialog>
+
+<!-- সাপোর্ট টিকেট চ্যাট -->
+<dialog id="tkDlg" class="big">
+  <div class="row"><h3 id="tkT" style="flex:1;margin:0"></h3><select id="tkSt" class="sm"><option value="open">খোলা</option><option value="pending">পেন্ডিং</option><option value="closed">বন্ধ</option></select></div>
+  <div class="sub" id="tkSub" style="margin:4px 0 10px"></div>
+  <div class="msgs" id="tkMsgs"></div>
+  <div class="row" style="margin-top:10px;flex-wrap:nowrap"><input id="tkIn" type="text" placeholder="অ্যাডমিনের উত্তর লিখুন…" autocomplete="off"><button id="tkSend" class="primary" style="flex:none"><span data-ic="send"></span></button></div>
+  <div class="acts"><button id="tkClose">বন্ধ</button></div>
+</dialog>
+
 <script src="common.js"></script>
 <script>
 (async () => {
@@ -134,16 +256,24 @@ const DEF={github_username:'SunniPedia',repo_name:'pdftojpg',pages_dir:'pages',t
 const eff=(b,k)=>(b[k]||S[k]||DEF[k]||'');
 
 /* tabs */
-const tabs={Users:'pUsers',Books:'pBooks',Set:'pSet'};
-Object.keys(tabs).forEach(k=>$('t'+k).onclick=()=>{
+const tabs={Dash:'pDash',Users:'pUsers',Review:'pReview',Pay:'pPay',Books:'pBooks',Notice:'pNotice',Supp:'pSupp',Log:'pLog',Set:'pSet'};
+function openTab(k){
   Object.entries(tabs).forEach(([n,p])=>{$(p).hidden=n!==k;$('t'+n).classList.toggle('on',n===k);});
+  if(k==='Dash')loadDash();
+  if(k==='Users')loadUsers().then(ensureMoney).then(renderUsers);
+  if(k==='Review')loadReview(true);
+  if(k==='Pay')loadPay();
   if(k==='Set')loadSettings();
-  if(k==='Books')pollRuns();
-});
+  if(k==='Books'){loadProofs().then(renderBooks);pollRuns();}
+  if(k==='Notice')loadNoticesAdmin();
+  if(k==='Supp')initSupport();
+  if(k==='Log')loadLog(true);
+}
+Object.keys(tabs).forEach(k=>$('t'+k).onclick=()=>openTab(k));
 
 /* ---------- USERS ---------- */
 async function loadUsers(){
-  try{users=await App.sb.get('app_users?select=*&order=created_at.desc');renderUsers();}
+  try{users=await App.sb.get('app_users?select=*&order=created_at.desc');renderUsers();fillUserSelects();}
   catch(e){toast(e.message,true);}
 }
 function renderUsers(){
@@ -151,15 +281,20 @@ function renderUsers(){
   const l=users.filter(u=>!q||(u.full_name||'').toLowerCase().includes(q)||(u.phone||'').includes(q));
   $('uCount').textContent='মোট '+users.length+' জন';
   $('uList').innerHTML=l.length?l.map(u=>{
-    const bound=!App.deviceEmpty(u.device_id), self=u.id===me.id;
+    const bound=!App.deviceEmpty(u.device_id), self=u.id===me.id, adm=App.isAdminPhone(u.phone);
     return `<div class="li" data-id="${esc(u.id)}">
-      <div class="row"><b style="flex:1">${esc(u.full_name)}${App.isAdminPhone(u.phone)?' <span class="badge ok">অ্যাডমিন</span>':''}</b>
+      <div class="row"><b style="flex:1">${esc(u.full_name)}${adm?' <span class="badge ok">অ্যাডমিন</span>':''}${u.is_blocked?' <span class="badge bad">ব্লকড</span>':''}</b>
         <span class="badge ${bound?'ok':'warn'}">${bound?'ডিভাইস যুক্ত':'ডিভাইস খালি'}</span>
         <span class="badge ${App.hasPin(u)?'':'warn'}">${App.hasPin(u)?'PIN আছে':'PIN নেই'}</span></div>
-      <div class="meta">মোবাইল: ${esc(u.phone)}<br>${esc(PM[u.payment_method]||'পেমেন্ট')}: ${esc(u.payment_number||'-')}<br>যোগ দিয়েছেন: ${u.created_at?new Date(u.created_at).toLocaleString('bn-BD'):'-'}</div>
+      <div class="meta">মোবাইল: ${esc(u.phone)}<br>${esc(PM[u.payment_method]||'পেমেন্ট')}: ${esc(u.payment_number||'-')}<br>যোগ দিয়েছেন: ${u.created_at?new Date(u.created_at).toLocaleString('bn-BD'):'-'}<br>সর্বশেষ সক্রিয়: ${App.fmtDT(lastActive(u)||null)}${u.is_blocked&&u.blocked_reason?'<br>ব্লকের কারণ: '+esc(u.blocked_reason):''}</div>
+      ${userStatHtml(u)}
       <div class="row">
+        <button class="sm" data-a="rev"><span data-ic="check"></span>রিভিউ</button>
+        <button class="sm" data-a="msg"><span data-ic="bell"></span>বার্তা</button>
+        <button class="sm" data-a="log"><span data-ic="list"></span>লগ</button>
         <button class="sm" data-a="pin"><span data-ic="key"></span>PIN রিসেট</button>
         <button class="sm" data-a="dev"><span data-ic="device"></span>ডিভাইস রিসেট</button>
+        ${self||adm?'':'<button class="sm warnb" data-a="blk"><span data-ic="ban"></span>'+(u.is_blocked?'আনব্লক':'ব্লক')+'</button>'}
         ${self?'':'<button class="sm danger" data-a="del"><span data-ic="trash"></span>ডিলিট</button>'}
       </div></div>`;}).join(''):'<div class="empty">কোনো ইউজার নেই</div>';
   App.hydrateIcons($('uList'));
@@ -172,27 +307,38 @@ $('uList').onclick=async e=>{
   if(b.dataset.a==='pin'){pinTarget=u;$('pdWho').textContent=u.full_name+' ('+u.phone+')';$('pdNew').value='';$('pdErr').textContent='';$('pDlg').showModal();}
   else if(b.dataset.a==='dev'){
     if(!confirm(u.full_name+' এর ডিভাইস রিসেট করবেন? ইউজার অন্য ফোনে লগইন করতে পারবে।'))return;
-    try{await App.sb.patch('app_users?id=eq.'+enc(u.id),{device_id:null});toast('ডিভাইস রিসেট হয়েছে');loadUsers();}catch(x){toast(x.message,true);}
+    try{await App.sb.patch('app_users?id=eq.'+enc(u.id),{device_id:null});toast('ডিভাইস রিসেট হয়েছে');App.log('admin_device',u.full_name);loadUsers();}catch(x){toast(x.message,true);}
+  }else if(b.dataset.a==='rev'){ $('rvUser').value=u.id;$('rvSt').value='';openTab('Review'); }
+  else if(b.dataset.a==='msg'){ openTab('Notice');$('ntTo').value=u.id;$('ntTitle').focus(); }
+  else if(b.dataset.a==='log'){ openTab('Log');$('lgUser').value=u.id;loadLog(true); }
+  else if(b.dataset.a==='blk'){
+    if(u.is_blocked){
+      if(!confirm(u.full_name+' কে আনব্লক করবেন?'))return;
+      try{await App.sb.patch('app_users?id=eq.'+enc(u.id),{is_blocked:false,blocked_reason:null});toast('আনব্লক করা হয়েছে');App.log('admin_unblock',u.full_name);loadUsers();}catch(x){toast(blkErr(x),true);}
+    }else{
+      const why=await ask({title:u.full_name+' কে ব্লক করুন',label:'ব্লকের কারণ (ইউজার দেখতে পাবে)',ok:'ব্লক করুন'});if(why==null)return;
+      try{await App.sb.patch('app_users?id=eq.'+enc(u.id),{is_blocked:true,blocked_reason:why||null});toast('ব্লক করা হয়েছে');App.log('admin_block',u.full_name+(why?' • '+why:''));loadUsers();}catch(x){toast(blkErr(x),true);}
+    }
   }else if(b.dataset.a==='del'){
     if(!confirm(u.full_name+' কে মুছে ফেলবেন? এটি ফেরানো যাবে না।'))return;
-    try{await App.sb.del('app_users?id=eq.'+enc(u.id));toast('ইউজার ডিলিট হয়েছে');loadUsers();}catch(x){toast(x.message,true);}
+    try{await App.sb.del('app_users?id=eq.'+enc(u.id));toast('ইউজার ডিলিট হয়েছে');App.log('admin_delete_user',u.full_name);loadUsers();}catch(x){toast(x.message,true);}
   }
 };
 $('pdCancel').onclick=()=>$('pDlg').close();
 $('pdNew').oninput=e=>e.target.value=e.target.value.replace(/\D/g,'');
 $('pdClear').onclick=async()=>{
-  try{await App.sb.patch('app_users?id=eq.'+enc(pinTarget.id),{password_salt:null,password_hash:null});$('pDlg').close();toast('PIN মুছে ফেলা হয়েছে');loadUsers();}catch(x){$('pdErr').textContent=x.message;}
+  try{await App.sb.patch('app_users?id=eq.'+enc(pinTarget.id),{password_salt:null,password_hash:null});$('pDlg').close();toast('PIN মুছে ফেলা হয়েছে');App.log('admin_pin',pinTarget.full_name+' (মুছে ফেলা)');loadUsers();}catch(x){$('pdErr').textContent=x.message;}
 };
 $('pdSet').onclick=async()=>{
   const p=$('pdNew').value;if(p.length!==4){$('pdErr').textContent='৪ ডিজিটের PIN দিন';return;}
   try{const s=App.newSalt(),h=await App.hashPin(p,s);
     await App.sb.patch('app_users?id=eq.'+enc(pinTarget.id),{password_salt:s,password_hash:h});
-    $('pDlg').close();toast('নতুন PIN সেট হয়েছে');loadUsers();}catch(x){$('pdErr').textContent=x.message;}
+    $('pDlg').close();toast('নতুন PIN সেট হয়েছে');App.log('admin_pin',pinTarget.full_name+' (নতুন PIN)');loadUsers();}catch(x){$('pdErr').textContent=x.message;}
 };
 
 /* ---------- BOOKS ---------- */
 async function loadBooks(){
-  try{books=await App.sb.get('books?select=*&order=created_at.desc');renderBooks();pollRuns();}catch(e){toast(e.message,true);}
+  try{books=await App.sb.get('books?select=*&order=created_at.desc');renderBooks();fillUserSelects();pollRuns();}catch(e){toast(e.message,true);}
 }
 function renderBooks(){
   $('bList').innerHTML=books.length?books.map(b=>`<div class="li" data-id="${esc(b.id)}">
@@ -200,8 +346,9 @@ function renderBooks(){
       <div style="width:44px;height:58px;border-radius:6px;overflow:hidden;background:var(--panel2);flex:none;display:flex;align-items:center;justify-content:center;color:var(--muted)">${b.cover_url?`<img src="${esc(b.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover">`:App.ic('book')}</div>
       <div style="flex:1;min-width:0"><b>${esc(b.name)}</b><div class="meta">${esc(b.author||'')}<br>${esc(eff(b,'github_username'))}/${esc(eff(b,'repo_name'))}${(!b.github_username&&!b.repo_name)?' (ডিফল্ট)':''} &middot; ${esc((b.folder||b.name))}_${esc(S.pages_dir||DEF.pages_dir)}${b.pdf_url?'<br><a href="'+esc(b.pdf_url)+'" target="_blank" rel="noopener">PDF লিংক</a>':''}</div></div>
     </div>
+    ${bookProgHtml(b)}
     <div class="run" data-run="${esc(b.id)}"></div>
-    <div class="row"><button class="sm" data-a="edit"><span data-ic="edit"></span>এডিট</button>${b.pdf_url?'<button class="sm" data-a="run" title="পিডিএফ থেকে ছবি তৈরির workflow আবার চালান"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>ছবি তৈরি</button>':''}<button class="sm danger" data-a="del"><span data-ic="trash"></span>ডিলিট</button></div></div>`).join(''):'<div class="empty">কোনো কিতাব যোগ করা হয়নি</div>';
+    <div class="row"><button class="sm" data-a="count" title="GitHub ফোল্ডার থেকে মোট পেইজ গুনুন"><span data-ic="refresh"></span>পেইজ গণনা</button><button class="sm" data-a="edit"><span data-ic="edit"></span>এডিট</button>${b.pdf_url?'<button class="sm" data-a="run" title="পিডিএফ থেকে ছবি তৈরির workflow আবার চালান"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>ছবি তৈরি</button>':''}<button class="sm danger" data-a="del"><span data-ic="trash"></span>ডিলিট</button></div></div>`).join(''):'<div class="empty">কোনো কিতাব যোগ করা হয়নি</div>';
   App.hydrateIcons($('bList'));
   updateRunUI();
 }
@@ -210,6 +357,8 @@ function openBook(b){
   editId=b?b.id:null;$('bdT').textContent=b?'কিতাব এডিট':'নতুন কিতাব';$('bdErr').textContent='';
   const v=b||{};
   $('fName').value=v.name||'';$('fAuth').value=v.author||'';$('fCover').value=v.cover_url||'';$('fPdf').value=v.pdf_url||'';
+  $('fRate').value=v.page_rate==null?'':v.page_rate;$('fTot').value=v.total_pages==null?'':v.total_pages;
+  $('fRate').placeholder='ডিফল্ট '+App.rateOf(null,S);
   $('fGu').value=v.github_username||'';$('fRepo').value=v.repo_name||'';$('fBr').value=v.branch||'';$('fFold').value=v.folder||'';
   $('fGu').placeholder=eff({},'github_username');$('fRepo').placeholder=eff({},'repo_name');
   $('fRun').checked=!b; $('fSplit').checked=getSplitPref(); updRunHint();
@@ -222,6 +371,11 @@ $('bList').onclick=async e=>{
   const b=e.target.closest('button[data-a]');if(!b)return;
   const bk=books.find(x=>x.id===b.closest('.li').dataset.id);if(!bk)return;
   if(b.dataset.a==='edit')openBook(bk);
+  else if(b.dataset.a==='count'){
+    b.disabled=true;
+    try{const c=await countPages(bk);await saveTotal(bk,c.n);toast('মোট পেইজ: '+App.bn(c.n)+(c.truncated?' (তালিকা অসম্পূর্ণ হতে পারে)':''));}
+    catch(x){toast('গণনা ব্যর্থ: '+x.message,true);}finally{b.disabled=false;}
+  }
   else if(b.dataset.a==='run'){
     const sp=getSplitPref();
     if(!confirm('"'+bk.name+'" — পিডিএফ থেকে আবার ছবি তৈরি করবেন?\n\nআউটপুট ফোল্ডার: '+outDirOf(bk)+'\nবাম-ডান ভাগ: '+(sp?'হ্যাঁ':'না')+'\n(একই নামের ছবি নতুন করে লেখা হবে; পুরনো ছবি মুছবে না)'))return;
@@ -256,7 +410,7 @@ function updRunHint(){
 async function gh(b,path,opt){
   const repo=eff(b,'github_username')+'/'+eff(b,'repo_name');
   return fetch('https://api.github.com/repos/'+repo+path,{cache:'no-store',...(opt||{}),headers:{
-    'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Authorization':'Bearer '+ghTok(),...((opt&&opt.headers)||{})}});
+    'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(ghTok()?{'Authorization':'Bearer '+ghTok()}:{}),...((opt&&opt.headers)||{})}});
 }
 async function ghErr(r){
   let m='';try{m=(await r.json()).message||'';}catch(e){}
@@ -371,6 +525,9 @@ $('bdSave').onclick=async()=>{
   const row={name:$('fName').value.trim(),author:$('fAuth').value.trim(),cover_url:$('fCover').value.trim(),pdf_url:$('fPdf').value.trim(),
     github_username:$('fGu').value.trim(),repo_name:$('fRepo').value.trim(),branch:$('fBr').value.trim(),folder:$('fFold').value.trim().replace(/^\/+|\/+$/g,'')};
   if(!row.name){$('bdErr').textContent='কিতাবের নাম আবশ্যক';return;}
+  { const rv=$('fRate').value.trim(),tv=$('fTot').value.trim();
+    if(rv!==''&&!(Number(rv)>=0)){$('bdErr').textContent='সঠিক রেট দিন';return;}
+    row.page_rate=rv===''?null:Number(rv);row.total_pages=tv===''?null:Math.max(0,Math.round(Number(tv))||0); }
   const wantRun=$('fRun').checked,split=$('fSplit').checked;
   if(wantRun){                                   // সংরক্ষণের আগেই যাচাই, যাতে অর্ধেক কাজ না হয়
     if(!row.pdf_url){$('bdErr').textContent='ছবি তৈরির জন্য পিডিএফ লিংক দিন';return;}
@@ -380,7 +537,14 @@ $('bdSave').onclick=async()=>{
   setSplitPref(split);
   let saved=null;
   try{
-    const r=editId?await App.sb.patch('books?id=eq.'+enc(editId),row):await App.sb.post('books',row);
+    let r,w=row;
+    const save=x=>editId?App.sb.patch('books?id=eq.'+enc(editId),x):App.sb.post('books',x);
+    try{r=await save(w);}
+    catch(e){
+      if(/page_rate|total_pages/i.test(e.message)){const{page_rate,total_pages,...rest}=row;r=await save(rest);toast('কিতাব সংরক্ষিত, কিন্তু রেট/মোট পেইজ সংরক্ষণ হয়নি — Supabase SQL Editor-এ supabase_v2.sql চালান',true);}
+      else throw e;
+    }
+    if(editId&&(String(row.page_rate)!==String((books.find(x=>String(x.id)===String(editId))||{}).page_rate)))App.log('admin_rate',row.name+' → '+(row.page_rate==null?'ডিফল্ট':row.page_rate+' ৳'));
     saved=(r&&r[0])||{...row,id:editId};
     $('bDlg').close();toast('কিতাব সংরক্ষিত হয়েছে');
   }catch(x){$('bdErr').textContent=x.message;return;}
@@ -397,7 +561,7 @@ async function loadSettings(){
     $('sProofF').value=r.proof_file||DEF.proof_file;$('sProofD').value=r.proof_dir||DEF.proof_dir;
     $('sWf').value=wfFile();$('sTok').value=r.github_token||'';$('sKey').value=r.gemini_api_key||'';$('sMod').value=r.gemini_model||'';
     $('sTmp').value=r.gemini_temp==null?'':r.gemini_temp;$('sP1').value=r.prompt_ocr||'';$('sP2').value=r.prompt_proof||'';
-    showApi(r.api_enabled!==false);
+    showApi(r.api_enabled!==false);fillPaySettings(r);
   }catch(e){toast(e.message,true);}
 }
 $('sSave').onclick=async()=>{
@@ -438,7 +602,409 @@ $('sApiOn').onchange=async e=>{
   }finally{e.target.disabled=false;}
 };
 
-loadUsers();fetchS().then(loadBooks);
+/* ====================================================================
+   v2: ড্যাশবোর্ড • রিভিউ • পেমেন্ট • নোটিশ • সাপোর্ট • লগ • আয়-সেটিংস • অগ্রগতি
+   ==================================================================== */
+const bn=App.bn, money=App.money, fmtDT=App.fmtDT, rateTxt=r=>Number(r).toLocaleString('bn-BD',{minimumFractionDigits:2,maximumFractionDigits:2})+' ৳';
+const tm=t=>t?new Date(t).getTime():0;
+const T0=()=>App.startOfDay().getTime();
+const D7=()=>{const d=App.startOfDay();d.setDate(d.getDate()-6);return d.getTime();};
+const booksMap=()=>Object.fromEntries(books.map(b=>[String(b.id),b]));
+const bname=id=>{const b=books.find(x=>String(x.id)===String(id));return b?b.name:'কিতাব';};
+const uname=id=>{const u=users.find(x=>String(x.id)===String(id));return u?u.full_name:'ইউজার';};
+const blkErr=x=>/is_blocked|blocked_reason/i.test(x.message)?'ব্লক কলাম নেই — Supabase SQL Editor-এ supabase_v2.sql চালান':x.message;
+const noTbl=e=>/PGRST205|42P01|PGRST200|404|does not exist/i.test((e&&e.message)||'');
+const SQLHINT='Supabase SQL Editor-এ supabase_v2.sql চালান';
+const setBg=(id,n)=>{const e=$(id);e.hidden=!n;e.textContent=n>99?'৯৯+':bn(n);};
+const segbar=(a,p,c,tot)=>{const t=Math.max(tot,a+p+c,1);return '<div class="pg seg3"><i class="a" style="width:'+(a/t*100)+'%"></i><i class="p" style="width:'+(p/t*100)+'%"></i><i class="c" style="width:'+(c/t*100)+'%"></i></div>';};
+
+/* ---- জেনেরিক ইনপুট ডায়ালগ ---- */
+function ask({title,label,value='',ok='ঠিক আছে',required=false,rows=3}){
+  return new Promise(res=>{
+    $('akT').textContent=title;$('akL').textContent=label;const t=$('akV');t.value=value;t.rows=rows;$('akOk').textContent=ok;$('akErr').textContent='';
+    let done=false;const fin=v=>{if(done)return;done=true;try{$('akDlg').close();}catch(e){}res(v);};
+    $('akOk').onclick=()=>{const v=t.value.trim();if(required&&!v){$('akErr').textContent='কিছু লিখুন';return;}fin(v);};
+    $('akNo').onclick=()=>fin(null);$('akDlg').oncancel=()=>fin(null);
+    $('akDlg').showModal();t.focus();
+  });
+}
+const sendNotice=o=>App.sb.post('notices',{user_id:o.user_id?String(o.user_id):null,title:o.title,body:o.body||null,kind:o.kind||'notice'});
+
+/* ---- ডেটা ক্যাশ: প্রুফ, পেমেন্ট ---- */
+let proofs=[],pays=[],proofsAt=0,payTbl=true,rvCol=true,pst={},bst={};
+async function loadProofs(force){
+  if(!force&&proofsAt&&Date.now()-proofsAt<20000)return proofs;
+  try{proofs=await App.getAll('page_proofs?select=user_id,book_id,stem,review_status,rate,created_at&order=book_id.asc,stem.asc');rvCol=true;}
+  catch(e){try{proofs=await App.getAll('page_proofs?select=user_id,book_id,stem&order=book_id.asc,stem.asc');rvCol=false;}catch(e2){proofs=[];}}
+  proofsAt=Date.now();buildStats();updBadges();return proofs;
+}
+async function loadPaysQuiet(){try{pays=await App.getAll('payments?order=created_at.desc,id.desc');payTbl=true;}catch(e){pays=[];payTbl=false;}updBadges();}
+const ensureMoney=()=>Promise.all([loadProofs(),loadPaysQuiet()]);
+function buildStats(){
+  const t0=T0(),w0=D7();pst={};bst={};
+  proofs.forEach(p=>{
+    const k=String(p.user_id),x=pst[k]||(pst[k]={n:0,today:0,w7:0,last:0,list:[]}),t=tm(p.created_at);
+    x.n++;x.list.push(p);if(t>=t0)x.today++;if(t>=w0)x.w7++;if(t>x.last)x.last=t;
+    const b=bst[String(p.book_id)]||(bst[String(p.book_id)]={n:0,a:0,p:0,c:0}),st=p.review_status||'pending';
+    b.n++;if(st==='approved')b.a++;else if(st==='correction')b.c++;else b.p++;
+  });
+}
+const lastActive=u=>Math.max(tm(u.last_active_at),(pst[String(u.id)]||{}).last||0);
+function updBadges(){
+  setBg('bgReview',proofs.filter(p=>(p.review_status||'pending')==='pending').length);
+  setBg('bgPay',pays.filter(x=>x.status==='requested').length);
+  setBg('bgSupp',tickets.filter(t=>(t.status||'open')!=='closed').length);
+}
+function userSum(uid){return App.summarize((pst[String(uid)]||{}).list||[],booksMap(),S,pays.filter(p=>String(p.user_id)===String(uid)));}
+function userStatHtml(u){
+  if(!proofsAt)return '';
+  const sm=userSum(u.id),x=pst[String(u.id)]||{today:0,w7:0};
+  const t=(n,l)=>'<div class="tile"><span class="tn" style="font-size:17px">'+n+'</span><span class="tl">'+l+'</span></div>';
+  return '<div class="tiles" style="margin:0;grid-template-columns:repeat(auto-fill,minmax(105px,1fr))">'+t(bn(sm.pages),'প্রুফড পেইজ')+t(bn(sm.approved),'অনুমোদিত')+t(bn(sm.pending),'রিভিউ বাকি')+t(bn(sm.correction),'সংশোধন')
+    +t(money(sm.earned),'মোট আয়')+t(money(sm.available),'উত্তোলনযোগ্য')+t(money(sm.paid),'পরিশোধিত')+t(bn(x.today)+' / '+bn(x.w7),'আজ / ৭ দিন')+'</div>';
+}
+function fillUserSelects(){
+  const opts=f=>'<option value="">'+f+'</option>'+users.map(u=>'<option value="'+esc(u.id)+'">'+esc(u.full_name)+' ('+esc(u.phone)+')</option>').join('');
+  [['rvUser','সব ইউজার'],['spUser','সব ইউজার'],['lgUser','সব ইউজার'],['ntTo','সবাই (ঘোষণা)']].forEach(([id,f])=>{const e=$(id),v=e.value;e.innerHTML=opts(f);e.value=v;});
+  const rb=$('rvBook'),v=rb.value;rb.innerHTML='<option value="">সব কিতাব</option>'+books.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join('');rb.value=v;
+}
+
+/* ---------- ড্যাশবোর্ড ---------- */
+let dP='day',rF='all';
+async function loadDash(){
+  $('dTiles').innerHTML='<div class="spin on" style="grid-column:1/-1"></div>';
+  await loadUsers();await Promise.all([loadProofs(true),loadPaysQuiet()]);renderDash();
+}
+function renderDash(){
+  const non=users.filter(u=>!App.isAdminPhone(u.phone)),ids=new Set(non.map(u=>String(u.id)));
+  const t0=T0(),w0=D7(),a1=new Set(),a7=new Set();
+  non.forEach(u=>{const t=tm(u.last_active_at);if(t>=t0)a1.add(String(u.id));if(t>=w0)a7.add(String(u.id));});
+  let today=0;
+  proofs.forEach(p=>{const t=tm(p.created_at),k=String(p.user_id);if(t>=t0){today++;if(ids.has(k))a1.add(k);}if(t>=w0&&ids.has(k))a7.add(k);});
+  const pend=proofs.filter(p=>(p.review_status||'pending')==='pending').length;
+  const rq=pays.filter(x=>x.status==='requested'),rqAmt=rq.reduce((s,x)=>s+Number(x.amount||0),0);
+  const T=(n,l,hl)=>'<div class="tile'+(hl?' hl':'')+'"><span class="tn">'+n+'</span><span class="tl">'+l+'</span></div>';
+  $('dTiles').innerHTML=T(bn(non.length),'মোট ইউজার',1)+T(bn(today),'আজকের প্রুফড পেইজ',1)+T(bn(a1.size),'আজ সক্রিয় ইউজার',1)+T(bn(a7.size),'৭ দিনে সক্রিয়')
+    +T(bn(proofs.length),'মোট প্রুফড পেইজ')+T(bn(pend),'রিভিউ বাকি')+T(bn(rq.length)+' ('+money(rqAmt)+')','পেমেন্ট রিকোয়েস্ট')+T(bn(users.filter(u=>u.is_blocked).length),'ব্লকড ইউজার');
+  $('dAt').textContent='হালনাগাদ: '+fmtDT(Date.now());
+  // লিডারবোর্ড
+  const since=dP==='day'?t0:dP==='week'?w0:0,m={};
+  proofs.forEach(p=>{if(p.review_status==='correction')return;if(since&&tm(p.created_at)<since)return;m[p.user_id]=(m[p.user_id]||0)+1;});
+  const rows=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  $('dLb').innerHTML=rows.length?rows.map(([id,n],i)=>'<div class="lbr '+(i<3?'r'+(i+1):'')+'"><span class="rk">'+bn(i+1)+'</span><span class="nm">'+esc(uname(id))+'</span><span class="ct">'+bn(n)+' পেইজ</span></div>').join(''):'<div class="empty" style="padding:18px">এই সময়ে কোনো প্রুফড পেইজ নেই</div>';
+  // সক্রিয়তার রিপোর্ট
+  let list=non.map(u=>{const x=pst[String(u.id)]||{n:0,today:0,w7:0,list:[]},sm=App.summarize(x.list,booksMap(),S,[]),la=lastActive(u);
+    return {u,n:x.n,today:x.today,w7:x.w7,la,ap:sm.approved,co:sm.correction,act:x.w7>0||tm(u.last_active_at)>=w0};});
+  if(rF==='act')list=list.filter(r=>r.act);else if(rF==='idle')list=list.filter(r=>!r.act);
+  list.sort((a,b)=>b.w7-a.w7||b.n-a.n||b.la-a.la);
+  $('rTbl').innerHTML='<thead><tr><th>ইউজার</th><th>আজ</th><th>৭ দিন</th><th>মোট</th><th>ভুলের হার</th><th>সর্বশেষ সক্রিয়</th><th></th></tr></thead><tbody>'+
+    (list.length?list.map(r=>{const rv=r.ap+r.co,pc=rv?Math.round(r.co/rv*100):null;
+      return '<tr><td><b>'+esc(r.u.full_name)+'</b><div class="sub">'+esc(r.u.phone)+(r.u.is_blocked?' • ব্লকড':'')+'</div></td><td>'+bn(r.today)+'</td><td>'+bn(r.w7)+'</td><td>'+bn(r.n)+'</td><td>'+(pc==null?'-':bn(pc)+'%')+'</td><td>'+(r.la?fmtDT(r.la):'-')+'</td><td><span class="badge '+(r.act?'ok':'warn')+'">'+(r.act?'সক্রিয়':'নিষ্ক্রিয়')+'</span></td></tr>';}).join('')
+      :'<tr><td colspan="7" class="sub" style="text-align:center;padding:18px">কোনো ইউজার নেই</td></tr>')+'</tbody>';
+}
+$('dReload').onclick=loadDash;
+$('dChips').onclick=e=>{const b=e.target.closest('button[data-p]');if(!b)return;dP=b.dataset.p;document.querySelectorAll('#dChips button').forEach(x=>x.classList.toggle('on',x===b));renderDash();};
+$('rChips').onclick=e=>{const b=e.target.closest('button[data-f]');if(!b)return;rF=b.dataset.f;document.querySelectorAll('#rChips button').forEach(x=>x.classList.toggle('on',x===b));renderDash();};
+
+/* ---------- রিভিউ (অনুমোদিত / সংশোধন দরকার) ---------- */
+let rv={rows:[],off:0,more:false,sel:new Set(),busy:false};
+const rvKey=r=>String(r.book_id)+'\u0001'+r.stem;
+function rvQuery(){let q='';const st=$('rvSt').value,u=$('rvUser').value,b=$('rvBook').value;if(st)q+='&review_status=eq.'+st;if(u)q+='&user_id=eq.'+enc(u);if(b)q+='&book_id=eq.'+enc(b);return q;}
+async function loadReview(reset){
+  if(rv.busy)return;rv.busy=true;
+  if(reset){rv.rows=[];rv.off=0;rv.sel.clear();}
+  try{
+    fillUserSelects();
+    const r=await App.sb.get('page_proofs?select=book_id,stem,user_id,review_status,review_note,created_at,reviewed_at,rate'+rvQuery()+'&order=created_at.desc,book_id.asc,stem.asc&limit=100&offset='+rv.off);
+    rv.rows.push(...r);rv.off+=r.length;rv.more=r.length===100;$('rvWarn').innerHTML='';
+  }catch(e){
+    $('rvWarn').innerHTML='<div class="noticebox bad">'+(/review_status|created_at|42703|PGRST/i.test(e.message)?'রিভিউ কলাম নেই — '+SQLHINT+'।':esc(e.message))+'</div>';
+  }finally{rv.busy=false;}
+  renderReview();
+}
+const STB={pending:['রিভিউ বাকি','warn'],approved:['অনুমোদিত','ok'],correction:['সংশোধন দরকার','bad']};
+function renderReview(){
+  $('rvCount').textContent=bn(rv.rows.length)+(rv.more?'+':'')+' টি';
+  $('rvList').innerHTML=rv.rows.length?rv.rows.map((r,i)=>{const st=STB[r.review_status||'pending']||STB.pending;
+    return '<div class="li" data-i="'+i+'"><div class="row" style="flex-wrap:nowrap"><input type="checkbox" class="rvc" style="width:18px;height:18px;flex:none;padding:0" '+(rv.sel.has(rvKey(r))?'checked':'')+'>'
+      +'<div style="flex:1;min-width:0"><b>'+esc(bname(r.book_id))+' — '+esc(r.stem)+'</b><div class="meta">'+esc(uname(r.user_id))+' • '+fmtDT(r.created_at)+(r.reviewed_at&&r.review_status!=='pending'?' • রিভিউ: '+fmtDT(r.reviewed_at):'')+'</div></div>'
+      +'<span class="badge '+st[1]+'">'+st[0]+'</span></div>'
+      +(r.review_note?'<div class="meta">নোট: '+esc(r.review_note)+'</div>':'')
+      +'<div class="row"><button class="sm ok" data-a="ok"><span data-ic="check"></span>অনুমোদন</button><button class="sm warnb" data-a="bad"><span data-ic="x"></span>সংশোধন দরকার</button>'
+      +'<a class="badge gold" style="padding:6px 10px" target="_blank" rel="noopener" href="view.html?book='+enc(r.book_id)+'&page='+enc(r.stem)+'">পেইজ দেখুন</a></div></div>';}).join('')
+    :'<div class="empty">এই ফিল্টারে কোনো পেইজ নেই</div>';
+  $('rvMore').hidden=!rv.more;App.hydrateIcons($('rvList'));
+}
+['rvSt','rvUser','rvBook'].forEach(i=>$(i).onchange=()=>loadReview(true));
+$('rvReload').onclick=()=>loadReview(true);$('rvMore').onclick=()=>loadReview(false);
+$('rvAll').onclick=()=>{const all=rv.rows.length&&rv.rows.every(r=>rv.sel.has(rvKey(r)));rv.rows.forEach(r=>all?rv.sel.delete(rvKey(r)):rv.sel.add(rvKey(r)));renderReview();};
+$('rvList').onchange=e=>{const c=e.target.closest('.rvc');if(!c)return;const r=rv.rows[+c.closest('.li').dataset.i];if(c.checked)rv.sel.add(rvKey(r));else rv.sel.delete(rvKey(r));};
+const bodyFor=(status,note,bk)=>status==='approved'?{review_status:'approved',review_note:null,reviewed_at:new Date().toISOString(),rate:App.rateOf(bk,S)}:{review_status:'correction',review_note:note||null,reviewed_at:new Date().toISOString(),rate:null};
+function applyLocal(arr,keyset,status,note){
+  arr.forEach(p=>{if(keyset.has(rvKey(p))){const b=bodyFor(status,note,booksMap()[String(p.book_id)]);Object.assign(p,b);}});
+}
+async function setReview(items,status,note){
+  const by={};items.forEach(i=>(by[String(i.book_id)]=by[String(i.book_id)]||[]).push(i.stem));
+  for(const [bid,stems] of Object.entries(by)){
+    const body=bodyFor(status,note,booksMap()[bid]);
+    for(let i=0;i<stems.length;i+=40){
+      const part=stems.slice(i,i+40).map(x=>'"'+x.replace(/(["\\])/g,'\\$1')+'"').join(',');
+      await App.sb.patchMin('page_proofs?book_id=eq.'+enc(bid)+'&stem=in.'+enc('('+part+')'),body);
+    }
+  }
+  const ks=new Set(items.map(rvKey));applyLocal(rv.rows,ks,status,note);applyLocal(proofs,ks,status,note);buildStats();updBadges();
+  const st=$('rvSt').value;if(st)rv.rows=rv.rows.filter(r=>(r.review_status||'pending')===st);
+  rv.sel=new Set([...rv.sel].filter(k=>rv.rows.some(r=>rvKey(r)===k)));
+  const uids=[...new Set(items.map(i=>String(i.user_id)))];
+  App.log(status==='approved'?'admin_approve':'admin_correction',items.length+' পেইজ • '+uids.slice(0,3).map(uname).join(', ')+(note?' • '+note:''));
+  renderReview();
+  if(status==='correction')await maybeWarn(uids);
+}
+async function maybeWarn(uids){
+  const wp=Number(S.warn_pct!=null?S.warn_pct:20),wm=Number(S.warn_min!=null?S.warn_min:5);
+  for(const uid of uids){
+    const list=(pst[uid]||{}).list||[],ap=list.filter(p=>p.review_status==='approved').length,co=list.filter(p=>p.review_status==='correction').length,tot=ap+co;
+    if(tot<wm)continue;const pc=Math.round(co/tot*100);if(pc<wp)continue;
+    try{
+      const last=(await App.sb.get('notices?user_id=eq.'+enc(uid)+'&kind=eq.review&order=created_at.desc&limit=1'))[0];
+      if(last&&Date.now()-tm(last.created_at)<12*3600e3)continue;
+      await sendNotice({user_id:uid,kind:'review',title:'প্রুফে ভুল বেশি ধরা পড়েছে',body:'আপনার রিভিউ হওয়া '+bn(tot)+'টি পেইজের মধ্যে '+bn(co)+'টিতে ('+bn(pc)+'%) সংশোধন দরকার হয়েছে।\nদয়া করে আরও মনোযোগ দিয়ে প্রুফ করুন — "সংশোধন দরকার" পেইজে আয় গোনা হয় না। "পেমেন্ট" ট্যাবের তালিকা থেকে পেইজ খুলে ঠিক করে আবার "প্রুফড" চাপুন।'});
+      toast(uname(uid)+' কে ভুলের সতর্কবার্তা পাঠানো হয়েছে');
+    }catch(e){}
+  }
+}
+$('rvList').onclick=async e=>{
+  const b=e.target.closest('button[data-a]');if(!b)return;const r=rv.rows[+b.closest('.li').dataset.i];if(!r)return;
+  b.disabled=true;
+  try{
+    if(b.dataset.a==='ok'){await setReview([r],'approved');toast('অনুমোদিত');}
+    else{const note=await ask({title:'সংশোধন দরকার',label:'ইউজারের জন্য নোট — কী ঠিক করতে হবে (ঐচ্ছিক)',ok:'চিহ্নিত করুন'});if(note==null){b.disabled=false;return;}await setReview([r],'correction',note);toast('সংশোধন দরকার চিহ্নিত হয়েছে');}
+  }catch(x){toast(x.message,true);}finally{b.disabled=false;}
+};
+$('rvOkSel').onclick=async()=>{
+  const items=rv.rows.filter(r=>rv.sel.has(rvKey(r)));if(!items.length){toast('কিছু নির্বাচন করুন',true);return;}
+  if(!confirm(bn(items.length)+'টি পেইজ অনুমোদন করবেন?'))return;
+  try{await setReview(items,'approved');toast(bn(items.length)+'টি পেইজ অনুমোদিত');}catch(x){toast(x.message,true);}
+};
+$('rvOkAll').onclick=async()=>{
+  const st=$('rvSt').value,u=$('rvUser').value,bk=$('rvBook').value;
+  if(st==='approved'){toast('এগুলো আগেই অনুমোদিত',true);return;}
+  await loadProofs(true);
+  const m=proofs.filter(p=>(!u||String(p.user_id)===u)&&(!bk||String(p.book_id)===bk)&&(st?(p.review_status||'pending')===st:(p.review_status||'pending')!=='approved'));
+  if(!m.length){toast('এই ফিল্টারে অনুমোদনের মতো পেইজ নেই');return;}
+  if(!confirm('ফিল্টারের সব '+bn(m.length)+'টি পেইজ অনুমোদন করবেন? (ইউজার: '+(u?uname(u):'সবাই')+', কিতাব: '+(bk?bname(bk):'সব')+')'))return;
+  $('rvOkAll').disabled=true;
+  try{
+    for(const bid of [...new Set(m.map(p=>String(p.book_id)))]){
+      await App.sb.patchMin('page_proofs?book_id=eq.'+enc(bid)+(u?'&user_id=eq.'+enc(u):'')+(st?'&review_status=eq.'+st:'&review_status=neq.approved'),bodyFor('approved','',booksMap()[bid]));
+    }
+    const ks=new Set(m.map(rvKey));applyLocal(proofs,ks,'approved');buildStats();updBadges();
+    App.log('admin_approve',bn(m.length)+' পেইজ (একসাথে) • '+(u?uname(u):'সব ইউজার'));toast(bn(m.length)+'টি পেইজ অনুমোদিত হয়েছে');loadReview(true);
+  }catch(x){toast(x.message,true);}finally{$('rvOkAll').disabled=false;}
+};
+
+/* ---------- পেমেন্ট রিকোয়েস্ট ---------- */
+let pyF='requested';
+async function loadPay(){
+  $('pyList').innerHTML='<div class="spin on"></div>';
+  await Promise.all([loadPaysQuiet(),loadProofs(true)]);renderPay();
+}
+function renderPay(){
+  if(!payTbl){$('pyTiles').innerHTML='';$('pyList').innerHTML='<div class="noticebox bad">payments টেবিল নেই — '+SQLHINT+'।</div>';return;}
+  const rq=pays.filter(x=>x.status==='requested'),pd=pays.filter(x=>x.status==='paid'),sum=a=>a.reduce((s,x)=>s+Number(x.amount||0),0);
+  $('pyTiles').innerHTML='<div class="tile hl"><span class="tn">'+bn(rq.length)+'</span><span class="tl">অপেক্ষমাণ রিকোয়েস্ট ('+money(sum(rq))+')</span></div>'
+    +'<div class="tile"><span class="tn">'+money(sum(pd))+'</span><span class="tl">মোট পরিশোধিত ('+bn(pd.length)+'টি)</span></div>'
+    +'<div class="tile"><span class="tn">'+bn(pays.filter(x=>x.status==='rejected').length)+'</span><span class="tl">বাতিল</span></div>';
+  const l=pays.filter(x=>!pyF||x.status===pyF);
+  $('pyList').innerHTML=l.length?l.map(x=>{
+    const st=x.status==='paid'?['পরিশোধিত','ok']:x.status==='rejected'?['বাতিল','bad']:['অপেক্ষমাণ','warn'],sm=userSum(x.user_id);
+    return '<div class="li" data-id="'+esc(x.id)+'"><div class="row"><b style="flex:1">'+esc(uname(x.user_id)||x.user_name)+'</b><span class="badge '+st[1]+'">'+st[0]+'</span></div>'
+      +'<div class="meta"><b style="font-size:17px;color:var(--fg)">'+money(x.amount)+'</b><br>'+esc(PM[x.method]||x.method||'')+': <b>'+esc(x.number||'-')+'</b> <button class="sm" data-a="copy" style="padding:2px 8px">কপি</button><br>রিকোয়েস্ট: '+fmtDT(x.created_at)+(x.pages?' • অনুমোদিত '+bn(x.pages)+' পেইজ':'')
+      +(x.processed_at?'<br>প্রক্রিয়া: '+fmtDT(x.processed_at):'')+(x.note?'<br>নোট: '+esc(x.note):'')
+      +'<br>ইউজারের হিসাব: মোট আয় '+money(sm.earned)+' • পরিশোধিত '+money(sm.paid)+' • রিকোয়েস্টে '+money(sm.requested)+'</div>'
+      +(x.status==='requested'?'<div class="row"><button class="sm ok" data-a="paid"><span data-ic="check"></span>পরিশোধ করেছি (অনুমোদন)</button><button class="sm danger" data-a="rej"><span data-ic="x"></span>বাতিল</button></div>':'')+'</div>';}).join('')
+    :'<div class="empty">কোনো পেমেন্ট নেই</div>';
+  App.hydrateIcons($('pyList'));
+}
+$('pyChips').onclick=e=>{const b=e.target.closest('button[data-s]');if(!b)return;pyF=b.dataset.s;document.querySelectorAll('#pyChips button').forEach(x=>x.classList.toggle('on',x===b));renderPay();};
+$('pyList').onclick=async e=>{
+  const b=e.target.closest('button[data-a]');if(!b)return;const x=pays.find(p=>String(p.id)===b.closest('.li').dataset.id);if(!x)return;
+  if(b.dataset.a==='copy'){try{await navigator.clipboard.writeText(x.number||'');toast('নাম্বার কপি হয়েছে');}catch(err){toast(x.number||'',false);}return;}
+  b.disabled=true;
+  try{
+    const now=new Date().toISOString();
+    if(b.dataset.a==='paid'){
+      const note=await ask({title:'পেমেন্ট নিশ্চিত করুন',label:money(x.amount)+' → '+(PM[x.method]||'')+' '+x.number+' (টাকা পাঠানোর পরেই চিহ্নিত করুন)। ট্রানজেকশন আইডি / নোট (ঐচ্ছিক):',ok:'পরিশোধিত চিহ্নিত করুন'});
+      if(note==null)return;
+      const sm=userSum(x.user_id);
+      if(sm.earned<sm.paid+Number(x.amount)&&!confirm('সতর্কতা: ইউজারের অনুমোদিত আয় ('+money(sm.earned)+') পরিশোধিত + এই রিকোয়েস্টের ('+money(sm.paid+Number(x.amount))+') চেয়ে কম। তবুও পরিশোধিত চিহ্নিত করবেন?'))return;
+      await App.sb.patch('payments?id=eq.'+enc(x.id),{status:'paid',processed_at:now,note:note||null});
+      Object.assign(x,{status:'paid',processed_at:now,note:note||null});
+      try{await sendNotice({user_id:x.user_id,kind:'payment',title:'পেমেন্ট পাঠানো হয়েছে',body:money(x.amount)+' আপনার '+(PM[x.method]||'')+' নাম্বার '+x.number+'-এ পাঠানো হয়েছে।'+(note?'\nনোট: '+note:'')});}catch(err){}
+      App.log('admin_pay',uname(x.user_id)+' • '+money(x.amount));toast('পরিশোধিত চিহ্নিত হয়েছে');
+    }else if(b.dataset.a==='rej'){
+      const why=await ask({title:'রিকোয়েস্ট বাতিল',label:'বাতিলের কারণ (ইউজার দেখতে পাবে)',ok:'বাতিল করুন'});if(why==null)return;
+      await App.sb.patch('payments?id=eq.'+enc(x.id),{status:'rejected',processed_at:now,note:why||null});
+      Object.assign(x,{status:'rejected',processed_at:now,note:why||null});
+      try{await sendNotice({user_id:x.user_id,kind:'payment',title:'পেমেন্ট রিকোয়েস্ট বাতিল হয়েছে',body:money(x.amount)+' এর রিকোয়েস্টটি বাতিল হয়েছে।'+(why?'\nকারণ: '+why:'')+'\nটাকা আপনার উত্তোলনযোগ্য ব্যালেন্সে ফিরে গেছে।'});}catch(err){}
+      App.log('admin_reject',uname(x.user_id)+' • '+money(x.amount)+(why?' • '+why:''));toast('বাতিল করা হয়েছে');
+    }
+    updBadges();renderPay();
+  }catch(err){toast(err.message,true);}finally{b.disabled=false;}
+};
+
+/* ---------- নোটিশ / ঘোষণা ---------- */
+async function loadNoticesAdmin(){
+  fillUserSelects();
+  try{
+    const l=await App.sb.get('notices?order=created_at.desc&limit=60');
+    $('ntList').innerHTML=l.length?l.map(n=>'<div class="li" data-id="'+esc(n.id)+'"><div class="row"><b style="flex:1">'+esc(n.title)+'</b><span class="badge '+(n.user_id?'warn':'ok')+'">'+(n.user_id?esc(uname(n.user_id)):'সবাই')+'</span></div>'
+      +'<div class="meta" style="white-space:pre-wrap">'+esc(n.body||'')+'</div><div class="row"><span class="sub" style="flex:1">'+fmtDT(n.created_at)+' • '+esc(n.kind||'notice')+'</span><button class="sm danger" data-a="del"><span data-ic="trash"></span>মুছুন</button></div></div>').join('')
+      :'<div class="empty">এখনো কোনো নোটিশ পাঠানো হয়নি</div>';
+    App.hydrateIcons($('ntList'));
+  }catch(e){$('ntList').innerHTML='<div class="noticebox bad">'+(noTbl(e)?'notices টেবিল নেই — '+SQLHINT:esc(e.message))+'</div>';}
+}
+$('ntSend').onclick=async()=>{
+  const title=$('ntTitle').value.trim(),body=$('ntBody').value.trim(),to=$('ntTo').value;
+  if(!title){$('ntErr').textContent='শিরোনাম লিখুন';return;}$('ntErr').textContent='';
+  if(!to&&!confirm('এই ঘোষণা সব ইউজারের কাছে যাবে। পাঠাবেন?'))return;
+  $('ntSend').disabled=true;
+  try{await sendNotice({user_id:to||null,title,body,kind:'notice'});$('ntTitle').value='';$('ntBody').value='';toast('নোটিশ পাঠানো হয়েছে');App.log('admin_notice',(to?uname(to):'সবাই')+' • '+title);loadNoticesAdmin();}
+  catch(e){$('ntErr').textContent=noTbl(e)?'notices টেবিল নেই — '+SQLHINT:e.message;}finally{$('ntSend').disabled=false;}
+};
+$('ntList').onclick=async e=>{const b=e.target.closest('button[data-a=del]');if(!b)return;if(!confirm('এই নোটিশ মুছে ফেলবেন?'))return;
+  try{await App.sb.del('notices?id=eq.'+enc(b.closest('.li').dataset.id));toast('মুছে ফেলা হয়েছে');loadNoticesAdmin();}catch(x){toast(x.message,true);}};
+
+/* ---------- সাপোর্ট টিকেট (Firebase Realtime Database — একই ডেটা support.html লেখে) ---------- */
+const FBCFG={apiKey:"AIzaSyDqjbhRTpFgwRtZrqCG-ckO-UM_uZqh2Rc",authDomain:"srizwanchat.firebaseapp.com",projectId:"srizwanchat",storageBucket:"srizwanchat.firebasestorage.app",messagingSenderId:"101112162367",appId:"1:101112162367:web:5d33f592297f4f9967b08a",measurementId:"G-8XHB9HQTMR"};
+let FB=null,tickets=[],spInit=false,curTk=null,tkOff=null;
+async function initSupport(){
+  if(spInit){renderSupp();return;}
+  spInit=true;$('spNote').textContent='টিকেট আনা হচ্ছে…';
+  try{
+    const A=await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js');
+    const D=await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js');
+    const app=A.initializeApp(FBCFG,'admin-panel');FB={D,db:D.getDatabase(app)};
+    D.onValue(D.ref(FB.db,'tickets'),snap=>{
+      const v=snap.val()||{};tickets=Object.entries(v).map(([id,t])=>({id,...t}));
+      tickets.sort((a,b)=>(b.lastMsg||b.createdAt||0)-(a.lastMsg||a.createdAt||0));
+      $('spNote').textContent='';renderSupp();updBadges();
+    },err=>{$('spNote').textContent='টিকেট আনা যায়নি: '+err.message;});
+  }catch(e){spInit=false;$('spNote').textContent='Firebase লোড হয়নি (ইন্টারনেট?): '+e.message;}
+}
+const TKST={open:['খোলা','ok'],pending:['পেন্ডিং','warn'],closed:['বন্ধ','bad']};
+function renderSupp(){
+  const q=$('spQ').value.trim().toLowerCase(),uid=$('spUser').value,st=$('spSt').value,uo=users.find(u=>String(u.id)===uid);
+  const l=tickets.filter(t=>{
+    if(st&&(t.status||'open')!==st)return false;
+    if(uid&&!(String(t.uid||'')===uid||(!t.uid&&uo&&(t.name||'').trim()===(uo.full_name||'').trim())))return false;
+    if(q&&![t.uid,t.name,t.phone,t.desc,t.id].join(' ').toLowerCase().includes(q))return false;
+    return true;});
+  $('spCount').textContent=bn(l.length)+' / '+bn(tickets.length)+' টি';
+  $('spList').innerHTML=l.length?l.map(t=>{const s=TKST[t.status||'open']||TKST.open;
+    return '<div class="li" data-id="'+esc(t.id)+'"><div class="row"><b style="flex:1">'+esc(t.name||'—')+'</b><span class="badge '+s[1]+'">'+s[0]+'</span></div>'
+      +'<div class="meta">'+(t.uid?'uid: <a href="#" data-a="byuid" data-uid="'+esc(t.uid)+'" style="color:var(--pri)">'+esc(t.uid)+'</a>':'uid নেই (পুরনো টিকেট)')+(t.phone?' • '+esc(t.phone):'')+'<br>'+esc((t.desc||'').slice(0,160))+'<br>খোলা: '+fmtDT(t.createdAt)+' • শেষ মেসেজ: '+fmtDT(t.lastMsg)+'</div>'
+      +'<div class="row"><button class="sm primary" data-a="open"><span data-ic="headset"></span>খুলুন / উত্তর দিন</button>'
+      +'<select class="sm" data-a="st"><option value="open"'+((t.status||'open')==='open'?' selected':'')+'>খোলা</option><option value="pending"'+(t.status==='pending'?' selected':'')+'>পেন্ডিং</option><option value="closed"'+(t.status==='closed'?' selected':'')+'>বন্ধ</option></select>'
+      +'<button class="sm danger" data-a="del"><span data-ic="trash"></span></button></div></div>';}).join(''):'<div class="empty">কোনো টিকেট নেই</div>';
+  App.hydrateIcons($('spList'));
+}
+['spQ'].forEach(i=>$(i).oninput=renderSupp);['spUser','spSt'].forEach(i=>$(i).onchange=renderSupp);
+$('spList').onclick=async e=>{
+  const a=e.target.closest('[data-a]');if(!a)return;const li=a.closest('.li'),id=li&&li.dataset.id;
+  if(a.dataset.a==='byuid'){e.preventDefault();$('spUser').value=a.dataset.uid;if($('spUser').value!==a.dataset.uid){$('spUser').value='';$('spQ').value=a.dataset.uid;}renderSupp();return;}
+  if(a.dataset.a==='open')openTicket(id);
+  else if(a.dataset.a==='del'){if(!confirm('এই টিকেট ও এর সব মেসেজ মুছে ফেলবেন?'))return;try{await FB.D.remove(FB.D.ref(FB.db,'tickets/'+id));toast('টিকেট মুছে ফেলা হয়েছে');}catch(x){toast(x.message,true);}}
+};
+$('spList').onchange=async e=>{const s=e.target.closest('select[data-a=st]');if(!s)return;
+  try{await FB.D.update(FB.D.ref(FB.db,'tickets/'+s.closest('.li').dataset.id),{status:s.value});toast('স্ট্যাটাস বদলেছে');}catch(x){toast(x.message,true);}};
+function openTicket(id){
+  const t=tickets.find(x=>x.id===id);if(!t||!FB)return;curTk=id;
+  $('tkT').textContent=t.name||'—';$('tkSub').textContent='uid: '+(t.uid||'—')+(t.phone?' • '+t.phone:'')+' • '+fmtDT(t.createdAt);$('tkSt').value=t.status||'open';$('tkMsgs').innerHTML='';
+  if(tkOff)tkOff();
+  tkOff=FB.D.onValue(FB.D.ref(FB.db,'tickets/'+id+'/messages'),snap=>{
+    const v=snap.val()||{},arr=Object.entries(v).map(([k,m])=>({k,...m})).sort((a,b)=>(a.time||0)-(b.time||0)),box=$('tkMsgs');
+    box.innerHTML=arr.map(m=>m.type==='system'?'<div class="m s">'+esc(m.msg)+'</div>':'<div class="m '+(m.sender==='user'?'u':'a')+'">'+esc(m.msg)+'<div class="sub" style="opacity:.75;margin-top:2px;color:inherit">'+fmtDT(m.time)+'</div></div>').join('');
+    box.scrollTop=box.scrollHeight;
+    arr.forEach(m=>{if(m.sender==='user'&&!(m.seenBy&&m.seenBy.admin))FB.D.update(FB.D.ref(FB.db,'tickets/'+id+'/messages/'+m.k+'/seenBy'),{admin:true}).catch(()=>{});});
+  });
+  $('tkDlg').showModal();
+}
+$('tkDlg').addEventListener('close',()=>{if(tkOff){tkOff();tkOff=null;}curTk=null;});
+$('tkClose').onclick=()=>$('tkDlg').close();
+$('tkSt').onchange=async()=>{if(!curTk)return;try{await FB.D.update(FB.D.ref(FB.db,'tickets/'+curTk),{status:$('tkSt').value});toast('স্ট্যাটাস বদলেছে');}catch(x){toast(x.message,true);}};
+async function tkSend(){
+  const v=$('tkIn').value.trim();if(!v||!curTk)return;$('tkIn').value='';
+  try{
+    await FB.D.push(FB.D.ref(FB.db,'tickets/'+curTk+'/messages'),{sender:'admin',msg:v,time:Date.now(),seenBy:{admin:true}});
+    await FB.D.update(FB.D.ref(FB.db,'tickets/'+curTk),{lastMsg:Date.now()});
+  }catch(x){toast(x.message,true);$('tkIn').value=v;}
+}
+$('tkSend').onclick=tkSend;$('tkIn').addEventListener('keydown',e=>{if(e.key==='Enter')tkSend();});
+
+/* ---------- কার্যকলাপের লগ ---------- */
+const ACT={login:'লগইন',logout:'লগআউট',signup:'নতুন অ্যাকাউন্ট',proof:'প্রুফড চিহ্ন',unproof:'প্রুফড তোলা',resubmit:'সংশোধন করে আবার জমা',payment_request:'পেমেন্ট রিকোয়েস্ট',payment_number_changed:'পেমেন্ট নাম্বার বদল',ticket_open:'টিকেট খোলা',
+  admin_approve:'[অ্যাডমিন] পেইজ অনুমোদন',admin_correction:'[অ্যাডমিন] সংশোধন দরকার',admin_pay:'[অ্যাডমিন] পেমেন্ট পরিশোধ',admin_reject:'[অ্যাডমিন] পেমেন্ট বাতিল',admin_block:'[অ্যাডমিন] ব্লক',admin_unblock:'[অ্যাডমিন] আনব্লক',
+  admin_notice:'[অ্যাডমিন] নোটিশ',admin_rate:'[অ্যাডমিন] রেট বদল',admin_pin:'[অ্যাডমিন] PIN',admin_device:'[অ্যাডমিন] ডিভাইস রিসেট',admin_delete_user:'[অ্যাডমিন] ইউজার ডিলিট',admin_settings:'[অ্যাডমিন] সেটিংস'};
+$('lgAct').innerHTML='<option value="">সব কাজ</option>'+Object.entries(ACT).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join('');
+let lg={rows:[],off:0,more:false,busy:false};
+async function loadLog(reset){
+  if(lg.busy)return;lg.busy=true;if(reset){lg.rows=[];lg.off=0;}fillUserSelects();
+  try{
+    const u=$('lgUser').value,a=$('lgAct').value;
+    const r=await App.sb.get('activity_log?select=*'+(u?'&user_id=eq.'+enc(u):'')+(a?'&action=eq.'+enc(a):'')+'&order=created_at.desc,id.desc&limit=100&offset='+lg.off);
+    lg.rows.push(...r);lg.off+=r.length;lg.more=r.length===100;
+    $('lgTbl').innerHTML='<thead><tr><th>সময়</th><th>ইউজার</th><th>কাজ</th><th>বিবরণ</th></tr></thead><tbody>'+(lg.rows.length?lg.rows.map(x=>'<tr><td style="white-space:nowrap">'+fmtDT(x.created_at)+'</td><td>'+esc(x.user_name||uname(x.user_id))+'</td><td><span class="badge '+(/^admin_/.test(x.action)?'gold':'')+'">'+esc(ACT[x.action]||x.action)+'</span></td><td class="sub" style="overflow-wrap:anywhere">'+esc(x.detail||'')+'</td></tr>').join(''):'<tr><td colspan="4" class="sub" style="text-align:center;padding:18px">কোনো লগ নেই</td></tr>')+'</tbody>';
+  }catch(e){$('lgTbl').innerHTML='<tbody><tr><td><div class="noticebox bad">'+(noTbl(e)?'activity_log টেবিল নেই — '+SQLHINT:esc(e.message))+'</div></td></tr></tbody>';lg.more=false;}
+  finally{lg.busy=false;}
+  $('lgCount').textContent=bn(lg.rows.length)+(lg.more?'+':'')+' টি';$('lgMore').hidden=!lg.more;
+}
+['lgUser','lgAct'].forEach(i=>$(i).onchange=()=>loadLog(true));$('lgReload').onclick=()=>loadLog(true);$('lgMore').onclick=()=>loadLog(false);
+
+/* ---------- আয় ও রিভিউ সেটিংস ---------- */
+function fillPaySettings(r){
+  $('sRate').value=r.page_rate==null?'':r.page_rate;$('sMin').value=r.min_payout==null?'':r.min_payout;
+  $('sWpct').value=r.warn_pct==null?'':r.warn_pct;$('sWmin').value=r.warn_min==null?'':r.warn_min;
+}
+$('sPaySave').onclick=async()=>{
+  const n=(id,d)=>{const v=$(id).value.trim();return v===''?d:Number(v);};
+  const row={page_rate:n('sRate',App.DEF_RATE),min_payout:n('sMin',App.DEF_MIN),warn_pct:Math.round(n('sWpct',20)),warn_min:Math.round(n('sWmin',5))};
+  if(!(row.page_rate>=0)||!(row.min_payout>=0)||!(row.warn_pct>=1&&row.warn_pct<=100)||!(row.warn_min>=1)){toast('সংখ্যাগুলো সঠিক দিন',true);return;}
+  $('sPaySave').disabled=true;
+  try{
+    let r=await App.sb.patch('app_settings?id=eq.1',row);if(!r.length)await App.sb.upsert('app_settings?on_conflict=id',{id:1,...row});
+    const old=S.page_rate;S={...S,...row};renderBooks();toast('আয় সেটিংস সংরক্ষিত হয়েছে');
+    App.log('admin_settings','রেট '+row.page_rate+' ৳, ন্যূনতম '+row.min_payout+' ৳'+(String(old)!==String(row.page_rate)?' (আগে '+old+')':''));
+  }catch(e){toast(/page_rate|min_payout|warn_/i.test(e.message)?'নতুন কলাম নেই — '+SQLHINT:e.message,true);}
+  finally{$('sPaySave').disabled=false;}
+};
+
+/* ---------- কিতাব: রেট, অগ্রগতি, পেইজ গণনা ---------- */
+function bookProgHtml(b){
+  const x=bst[String(b.id)]||{n:0,a:0,p:0,c:0},tot=Number(b.total_pages)||0;
+  let h='<div class="meta">রেট: <b>'+rateTxt(App.rateOf(b,S))+'</b>/পেইজ'+(b.page_rate==null||b.page_rate===''?' (ডিফল্ট)':'')+' • '+(tot?'মোট '+bn(tot)+' পেইজ':'মোট পেইজ দেওয়া নেই (এডিট বা "পেইজ গণনা")')+'</div>';
+  if(proofsAt)h+=segbar(x.a,x.p,x.c,tot||x.n)+'<div class="pgt"><span>প্রুফড '+bn(x.n)+(tot?' / '+bn(tot)+' • বাকি '+bn(Math.max(0,tot-x.n)):'')+'</span><span>অনুমোদিত '+bn(x.a)+' • রিভিউ বাকি '+bn(x.p)+' • সংশোধন '+bn(x.c)+'</span></div>';
+  return h;
+}
+async function countPages(b){
+  let ref=eff(b,'branch');
+  if(!ref){const ri=await gh(b,'');if(!ri.ok)throw new Error(await ghErr(ri));ref=(await ri.json()).default_branch||'main';}
+  const r=await gh(b,'/git/trees/'+enc(ref)+'?recursive=1');if(!r.ok)throw new Error(await ghErr(r));
+  const j=await r.json(),dir=outDirOf(b)+'/';
+  return {n:(j.tree||[]).filter(e=>e.type==='blob'&&e.path.startsWith(dir)&&/\.(jpe?g|png|webp)$/i.test(e.path)).length,truncated:!!j.truncated,dir};
+}
+async function saveTotal(bk,n){await App.sb.patch('books?id=eq.'+enc(bk.id),{total_pages:n});bk.total_pages=n;renderBooks();}
+const formBook=()=>({name:$('fName').value.trim(),folder:$('fFold').value.trim(),github_username:$('fGu').value.trim(),repo_name:$('fRepo').value.trim(),branch:$('fBr').value.trim()});
+$('fCount').onclick=async()=>{
+  $('fCount').disabled=true;$('bdErr').textContent='';
+  try{const b=formBook();if(!b.name)throw new Error('আগে কিতাবের নাম দিন');const c=await countPages(b);$('fTot').value=c.n;toast(c.dir+' — '+App.bn(c.n)+'টি ছবি'+(c.truncated?' (তালিকা অসম্পূর্ণ হতে পারে)':''));}
+  catch(e){$('bdErr').textContent='গণনা ব্যর্থ: '+e.message;}finally{$('fCount').disabled=false;}
+};
+
+/* ---- শুরু ---- */
+setTimeout(initSupport,2500);   // সাপোর্ট ব্যাজের জন্য আগে থেকেই টিকেট শোনা
+
+loadUsers();fetchS().then(loadBooks).then(loadDash);
 })();
 </script>
 </body>

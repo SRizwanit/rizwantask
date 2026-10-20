@@ -2,6 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="utf-8">
+<script src="theme-init.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>লগইন - কিতাব প্রুফিং</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -102,6 +103,7 @@ $('bPhone').onclick=async()=>{
   phone=v.phone;busy(true);err('');
   try{
     user=await App.findUserByPhone(phone);
+    if(user&&user.is_blocked&&!App.isAdminPhone(user.phone)){err('আপনার অ্যাকাউন্ট ব্লক করা হয়েছে'+(user.blocked_reason?': '+user.blocked_reason:'')+'। অ্যাডমিনের সাথে যোগাযোগ করুন।');return;}
     if(user)afterUserKnown(user);else await startOtp();
   }catch(e){err(e.message);}finally{busy(false);}
 };
@@ -127,7 +129,7 @@ $('bOtp').onclick=async()=>{
     pinStep('SETUP_NEW');
   }catch(e){err(e.message);}finally{busy(false);}
 };
-function finish(u){App.session.set(u);location.replace('task.html');}
+function finish(u){App.session.set(u);App.log('login','',{id:u.id,name:u.full_name}).finally(()=>location.replace('task.html'));}
 $('bPin').onclick=async()=>{
   const pin=$('pin').value;if(pin.length!==4)return err('৪ ডিজিটের PIN দিন');
   if(mode!=='LOGIN'&&pin!==$('pin2').value)return err('দুটি PIN মিলছে না');
@@ -157,6 +159,7 @@ $('bRetry').onclick=async()=>{
   try{
     if(blockReason==='BOUND'){
       user=await App.findUserByPhone(phone);if(!user)return err('একাউন্ট খুঁজে পাওয়া যায়নি');
+      if(user.is_blocked&&!App.isAdminPhone(user.phone))return err('আপনার অ্যাকাউন্ট ব্লক করা হয়েছে');
       const st=user.device_id,dev=App.deviceId();
       if(App.deviceEmpty(st)||st===dev){toast('ডিভাইস মিলেছে, এখন লগইন করুন');pinStep(App.hasPin(user)?'LOGIN':'SETUP_EXISTING');}
       else err('এখনো অ্যাডমিন ডিভাইস রিসেট করেননি, একটু পর আবার চেষ্টা করুন');

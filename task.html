@@ -2,6 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="utf-8">
+<script src="theme-init.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>কাজ - কিতাব প্রুফিং</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,6 +18,7 @@
   <span class="logo-sm" data-ic="mark"></span>
   <h2 id="ttl">টাস্কের তালিকা</h2>
   <span id="myCnt" class="cnt" hidden title="আপনার সম্পন্ন টাস্ক"><span data-ic="check"></span><b id="cntN">০</b><small>টি সম্পন্ন</small></span>
+  <button id="bTheme" class="sm" data-theme-toggle title="থিম"></button>
   <button id="bAdmin" class="sm" hidden><span data-ic="shield"></span>অ্যাডমিন</button>
   <button id="bOut" class="sm" hidden><span data-ic="logout"></span>লগআউট</button>
 </header>
@@ -31,9 +33,50 @@
       </div>
       <button id="bReload" class="sm" title="রিফ্রেশ"><span data-ic="refresh"></span></button>
     </div>
+    <div id="noticeBar"></div>
     <div class="spin on" id="spin"></div>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>কোনো কিতাব পাওয়া যায়নি</div>
+  </section>
+
+
+  <!-- PAYMENT pane -->
+  <section id="pPay" hidden style="max-width:560px;margin:0 auto">
+    <div id="warnBox"></div>
+    <div class="tiles" id="payTiles"></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="row"><b style="flex:1">পেমেন্ট রিকোয়েস্ট</b><span class="badge gold" id="rateInfo"></span></div>
+      <p class="hint" id="reqHint" style="margin:8px 0 12px"></p>
+      <button id="bReq" class="primary block"><span data-ic="wallet"></span>পেমেন্ট রিকোয়েস্ট করুন</button>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <b>পেমেন্ট ইতিহাস</b>
+      <div id="payList" style="margin-top:10px"></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <b>কিতাব অনুযায়ী আয়</b>
+      <p class="hint" style="margin:4px 0 10px">আয় গোনা হয় শুধু অ্যাডমিন যে পেইজ <b>অনুমোদিত</b> করেছেন সেগুলোর।</p>
+      <div id="bookEarn"></div>
+    </div>
+    <div class="card" id="corrCard" hidden>
+      <b>সংশোধন দরকার</b>
+      <p class="hint" style="margin:4px 0 10px">অ্যাডমিন এই পেইজগুলো সংশোধন করতে বলেছেন। ঠিক করে আবার <b>প্রুফড</b> চাপলে পুনরায় রিভিউতে যাবে।</p>
+      <div id="corrList"></div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD pane -->
+  <section id="pRank" hidden style="max-width:520px;margin:0 auto">
+    <div class="card" style="margin-bottom:14px;text-align:center">
+      <div class="av" style="background:linear-gradient(145deg,#a8761f,#f2d27a);color:#4a3200"><span data-ic="trophy" data-cls="lg"></span></div>
+      <h3 style="margin:0 0 4px">লিডারবোর্ড</h3>
+      <p class="hint" id="myRank" style="margin:0"></p>
+    </div>
+    <div class="chips" id="rankChips" style="justify-content:center">
+      <button data-p="day" class="on">আজ</button><button data-p="week">এই সপ্তাহ</button><button data-p="all">সব সময়</button>
+    </div>
+    <div class="spin" id="rankSpin"></div>
+    <div id="rankList"></div>
   </section>
 
   <!-- PROFILE pane -->
@@ -46,13 +89,27 @@
         <span class="stI" data-ic="check"></span>
         <div class="stT"><span class="stN" id="stN">০</span><span class="stL"> টি টাস্ক সম্পন্ন</span></div>
       </div>
+      <div class="stat" style="margin-top:10px" id="incCard">
+        <span class="stI" data-ic="wallet"></span>
+        <div class="stT"><span class="stN" id="incN">০.০০ ৳</span><span class="stL"> মোট আয়</span>
+          <div class="sub" id="incSub" style="margin-top:2px"></div></div>
+      </div>
       <div style="text-align:left;margin-top:16px">
         <div class="kv"><span>মোবাইল নাম্বার</span><b id="pPhone"></b></div>
         <div class="kv"><span id="pPmL">বিকাশ নাম্বার</span><b id="pPm"></b></div>
         <div class="kv"><span>যোগ দিয়েছেন</span><b id="pDate"></b></div>
       </div>
+      <div style="text-align:left;margin-top:16px" id="profProg"></div>
+      <label class="f" style="text-align:left">থিম (দিন/রাত)</label>
+      <div class="seg" id="themeSeg">
+        <label><input type="radio" name="th" value="auto"><span>সিস্টেম</span></label>
+        <label><input type="radio" name="th" value="light"><span>লাইট</span></label>
+        <label><input type="radio" name="th" value="dark"><span>ডার্ক</span></label>
+      </div>
       <button id="bEdit" class="block" style="margin-top:16px"><span data-ic="edit"></span>পেমেন্ট নাম্বার পরিবর্তন</button>
       <button id="bOut2" class="danger block" style="margin-top:10px"><span data-ic="logout"></span>লগআউট</button>
+      <button id="bNotices" class="help block" style="margin-top:10px"><span data-ic="bell"></span>নোটিশ ও ঘোষণা</button>
+      <button id="bGuide" class="help block" style="margin-top:10px"><span data-ic="info"></span>ব্যবহারের গাইড</button>
       <button id="bTicket" class="help block" style="margin-top:10px"><span data-ic="ticket"></span>টিকেট খুলুন</button>
       <button id="bWa" class="help wa block" style="margin-top:10px"><span data-ic="whatsapp"></span>হোয়াটসঅ্যাপে যোগাযোগ করুন</button>
     </div>
@@ -61,6 +118,8 @@
 
 <nav class="bottom" id="nav" hidden>
   <button id="nTask" class="on"><span data-ic="tasks" data-cls="lg"></span>টাস্ক</button>
+  <button id="nPay"><span data-ic="wallet" data-cls="lg"></span>পেমেন্ট</button>
+  <button id="nRank"><span data-ic="trophy" data-cls="lg"></span>র‍্যাংক</button>
   <button id="nProf"><span data-ic="user" data-cls="lg"></span>প্রোফাইল</button>
 </nav>
 
@@ -75,6 +134,36 @@
   <input id="pn" type="tel" inputmode="tel" maxlength="18">
   <div class="err" id="dErr"></div>
   <div class="acts"><button id="dCancel">বন্ধ</button><button id="dSave" class="primary">সংরক্ষণ</button></div>
+</dialog>
+
+
+<!-- পেমেন্ট রিকোয়েস্ট -->
+<dialog id="rqDlg">
+  <h3>পেমেন্ট রিকোয়েস্ট</h3>
+  <div class="kv"><span>উত্তোলনযোগ্য</span><b id="rqAvail"></b></div>
+  <div class="kv"><span>ন্যূনতম রিকোয়েস্ট</span><b id="rqMin"></b></div>
+  <div class="kv"><span id="rqPmL">পেমেন্ট নাম্বার</span><b id="rqPm"></b></div>
+  <label class="f" for="rqAmt">কত টাকা চাইবেন (৳)</label>
+  <input id="rqAmt" type="number" inputmode="decimal" min="0" step="0.01">
+  <p class="hint" style="margin:8px 0 0">অ্যাডমিন অনুমোদন দিয়ে এই নাম্বারে টাকা পাঠাবেন। নাম্বার ভুল হলে আগে প্রোফাইল থেকে ঠিক করুন।</p>
+  <div class="err" id="rqErr"></div>
+  <div class="acts"><button id="rqCancel">বন্ধ</button><button id="rqSend" class="primary">রিকোয়েস্ট পাঠান</button></div>
+</dialog>
+
+<!-- নোটিশ / ঘোষণা (কাস্টম ডায়ালগ) -->
+<dialog id="nDlg" class="big">
+  <div class="row"><span class="badge gold" id="nKind">নোটিশ</span><span class="sub" id="nDate" style="margin-left:auto"></span></div>
+  <h3 id="nTitle" style="margin-top:8px"></h3>
+  <div class="nbody" id="nBody"></div>
+  <div class="dots" id="nDots"></div>
+  <div class="acts"><button id="nPrev">আগের</button><button id="nNext">পরের</button><button id="nOk" class="primary">ঠিক আছে</button></div>
+</dialog>
+
+<!-- প্রথমবার ঢুকলে ছোট গাইড -->
+<dialog id="gDlg">
+  <div class="gstep" id="gStep"></div>
+  <div class="dots" id="gDots"></div>
+  <div class="acts"><button id="gSkip">বাদ দিন</button><button id="gPrev">আগের</button><button id="gNext" class="primary">পরের</button></div>
 </dialog>
 
 <style>
@@ -100,45 +189,51 @@ button.help .i{width:18px;height:18px}
   background:linear-gradient(135deg,rgba(11,95,76,.10),rgba(217,171,67,.16));border:1px solid rgba(217,171,67,.5)}
 .stat .stI{display:flex;width:44px;height:44px;border-radius:50%;align-items:center;justify-content:center;flex:none;background:linear-gradient(145deg,#0a4f40,#16a583);color:#f7e2a0}
 .stat .stI .i{width:22px;height:22px;stroke-width:2.6}
+.book .bp{margin-top:6px}
+.book .rt{font-size:11.5px;color:var(--gold,#c9972b);font-weight:600}
+.stT{min-width:0}
+nav.bottom button{font-size:11.5px}
 .stN{font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
 .stL{font-size:16px;font-weight:600;color:var(--muted);margin-left:2px}
 </style>
 <script src="common.js"></script>
 <script>
 (async () => {
-const {$,esc,toast,Phone}=App;
+const {$,esc,toast,Phone,bn,money,fmtD,fmtDT,enc}=App;
 let me=await App.requireAuth(), isAdmin=App.isAdminPhone(me.phone), books=[];
 const PM={bkash:'বিকাশ',nagad:'নগদ'};
+let S={}, booksById={}, bookCounts={}, myProofs=[], myPays=[], sum=null;
 
-// Admin: top field to reach admin.html. User: bottom navigation (task / profile).
-$('bOut').onclick=$('bOut2').onclick=()=>App.logout();
+// Admin: top field to reach admin.html. User: bottom navigation (task / pay / rank / profile).
+$('bOut').onclick=$('bOut2').onclick=()=>{App.log('logout','');setTimeout(()=>App.logout(),150);};
 // সাপোর্ট: টিকেট খুলুন → support.html ; হোয়াটসঅ্যাপ → অ্যাডমিনের WhatsApp (wa.me API)
 $('bTicket').onclick=()=>location.href='support.html';
 $('bWa').onclick=()=>{
   const m='আসসালামু আলাইকুম, আমি কিতাব প্রুফিং অ্যাপের ইউজার। নাম: '+(me.full_name||'-')+'। ফোন নাম্বার: '+(me.phone||'-')+'। আমার একটি সাহায্য প্রয়োজন।';
   window.open('https://wa.me/'+App.ADMIN_WA+'?text='+encodeURIComponent(m),'_blank','noopener');
 };
-// ব্যাক বাটনে (bfcache) আগের ইউজারের পেইজ ফিরে এলে সেশন মিলিয়ে নিন — অন্য অ্যাকাউন্টের তথ্য যেন না দেখা যায়
-window.addEventListener('pageshow',e=>{
-  if(!e.persisted)return;
-  const s=App.session.get();
-  if(!s||String(s.id)!==String(me.id))location.replace(s?'task.html':'login.html');
-});
-$('nav').hidden=false;   // টাস্ক / প্রোফাইল নেভিগেশন সবার জন্য
+$('nav').hidden=false;   // টাস্ক / পেমেন্ট / র‍্যাংক / প্রোফাইল নেভিগেশন সবার জন্য
 if(isAdmin){ $('bAdmin').hidden=false; $('bOut').hidden=false; $('bAdmin').onclick=()=>location.href='admin.html'; $('pRole').textContent='অ্যাডমিন'; }
 App.hydrateIcons();
 
+const TABS={task:['pTask','nTask','টাস্কের তালিকা'],pay:['pPay','nPay','পেমেন্ট'],rank:['pRank','nRank','লিডারবোর্ড'],prof:['pProf','nProf','প্রোফাইল']};
 function tab(t){
-  $('pTask').hidden=t!=='task'; $('pProf').hidden=t!=='prof';
-  $('nTask').classList.toggle('on',t==='task'); $('nProf').classList.toggle('on',t==='prof');
-  $('ttl').textContent=t==='task'?'টাস্কের তালিকা':'প্রোফাইল';
+  Object.entries(TABS).forEach(([k,[p,n,ttl]])=>{ $(p).hidden=k!==t; $(n).classList.toggle('on',k===t); if(k===t)$('ttl').textContent=ttl; });
+  if(t==='pay'||t==='prof')loadMoney();
+  if(t==='rank')loadRank();
+  if(t==='task')loadCounts();
 }
-$('nTask').onclick=()=>tab('task'); $('nProf').onclick=()=>{tab('prof');loadCount();};
-if(location.hash==='#prof')tab('prof');   // support.html থেকে ফিরলে প্রোফাইল ট্যাব খুলুক
+$('nTask').onclick=()=>tab('task'); $('nPay').onclick=()=>tab('pay'); $('nRank').onclick=()=>tab('rank');
+$('nProf').onclick=()=>{tab('prof');loadCount();};
+
+// ---- থিম সুইচ (প্রোফাইল) ----
+function syncThemeSeg(){const r=document.querySelector('#themeSeg input[value='+App.theme.get()+']');if(r)r.checked=true;}
+document.querySelectorAll('#themeSeg input').forEach(r=>r.onchange=()=>{App.theme.set(r.value);App.mountTheme();toast('থিম: '+App.theme.label());});
+syncThemeSeg();
+$('bTheme').addEventListener('click',syncThemeSeg);
 
 // ---- আমার সম্পন্ন টাস্ক (শুধু নিজের প্রুফড পেইজ) ----
 let myCount=null;
-const bn=n=>Number(n).toLocaleString('bn-BD');
 function renderCount(){
   const t=myCount==null?'–':bn(myCount);
   $('cntN').textContent=t; $('stN').textContent=t; $('myCnt').hidden=myCount==null;
@@ -154,7 +249,7 @@ async function loadCount(){
     }catch(e){ // ফাংশন না থাকলে সরাসরি গুনে নিন
       n=0;
       for(let off=0;;off+=1000){
-        const r=await App.sb.get('page_proofs?user_id=eq.'+encodeURIComponent(me.id)+'&select=stem&order=stem.asc&limit=1000&offset='+off);
+        const r=await App.sb.get('page_proofs?user_id=eq.'+enc(me.id)+'&select=stem&order=stem.asc&limit=1000&offset='+off);
         n+=r.length; if(r.length<1000)break;
       }
     }
@@ -163,8 +258,9 @@ async function loadCount(){
   finally{ cntBusy=false; renderCount(); }
 }
 // view.html থেকে ফিরে এলে বা ট্যাবে ফিরলে সংখ্যা নতুন করে আনুন
-window.addEventListener('pageshow',e=>{ if(e.persisted)loadCount(); });
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible')loadCount(); });
+const refreshAll=()=>{ loadCount(); loadCounts(); loadMoney(); loadNotices(); };
+window.addEventListener('pageshow',e=>{ if(e.persisted)refreshAll(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible')refreshAll(); });
 
 function renderProfile(){
   $('av').textContent=(me.full_name||'?').trim().charAt(0).toUpperCase();
@@ -174,24 +270,162 @@ function renderProfile(){
 }
 renderProfile(); loadCount();
 
+// ================= সেটিংস, আয়ের হিসাব =================
+const rateOf=b=>App.rateOf(b,S);
+const rateTxt=r=>Number(r).toLocaleString('bn-BD',{minimumFractionDigits:2,maximumFractionDigits:2})+' ৳';
+async function loadSettings(){
+  try{ S=(await App.sb.get('app_settings?id=eq.1&select=page_rate,min_payout,warn_pct,warn_min&limit=1'))[0]||{}; }
+  catch(e){ S=S||{}; }
+}
+const minPayout=()=>{const m=Number(S.min_payout);return Number.isFinite(m)&&S.min_payout!=null?m:App.DEF_MIN;};
+async function fetchMine(){
+  try{ return await App.getAll('page_proofs?user_id=eq.'+enc(me.id)+'&select=book_id,stem,review_status,review_note,rate,created_at,reviewed_at&order=created_at.desc,book_id.asc,stem.asc'); }
+  catch(e){ return await App.getAll('page_proofs?user_id=eq.'+enc(me.id)+'&select=book_id,stem&order=book_id.asc,stem.asc'); }
+}
+let moneyBusy=false, moneyAgain=false;
+async function loadMoney(){
+  if(moneyBusy){moneyAgain=true;return;} moneyBusy=true;
+  try{
+    await loadSettings();
+    if(!books.length){ try{ books=await App.sb.get('books?select=*&order=created_at.desc'); booksById=Object.fromEntries(books.map(b=>[String(b.id),b])); }catch(e){} }
+    myProofs=await fetchMine();
+    try{ myPays=await App.getAll('payments?user_id=eq.'+enc(me.id)+'&order=created_at.desc'); }catch(e){ myPays=[]; }
+    sum=App.summarize(myProofs,booksById,S,myPays);
+    renderMoney(); renderBooks();
+  }catch(e){ /* নেটওয়ার্ক/টেবিল সমস্যা: আগের তথ্য থাকুক */ }
+  finally{ moneyBusy=false; if(moneyAgain){moneyAgain=false;} }
+}
+function barSeg(a,p,c,tot){
+  const t=Math.max(tot,a+p+c,1);
+  return '<div class="pg seg3"><i class="a" style="width:'+(a/t*100)+'%"></i><i class="p" style="width:'+(p/t*100)+'%"></i><i class="c" style="width:'+(c/t*100)+'%"></i></div>';
+}
+function renderMoney(){
+  if(!sum)return;
+  const s=sum, min=minPayout();
+  $('incN').textContent=money(s.earned);
+  $('incSub').textContent='উত্তোলনযোগ্য '+money(s.available)+(s.pendingAmt>0?' • রিভিউ বাকি '+money(s.pendingAmt):'');
+  $('rateInfo').textContent='ডিফল্ট রেট '+rateTxt(rateOf(null))+' / পেইজ';
+  $('payTiles').innerHTML=
+    '<div class="tile hl"><span class="tn">'+money(s.earned)+'</span><span class="tl">মোট আয় (অনুমোদিত '+bn(s.approved)+' পেইজ)</span></div>'+
+    '<div class="tile"><span class="tn">'+money(s.available)+'</span><span class="tl">উত্তোলনযোগ্য (বাকি)</span></div>'+
+    '<div class="tile"><span class="tn">'+money(s.paid)+'</span><span class="tl">এ পর্যন্ত পেয়েছেন</span></div>'+
+    '<div class="tile"><span class="tn">'+money(s.requested)+'</span><span class="tl">রিকোয়েস্টে আছে (অপেক্ষমাণ)</span></div>'+
+    '<div class="tile"><span class="tn">'+bn(s.pending)+'</span><span class="tl">রিভিউ বাকি পেইজ ('+money(s.pendingAmt)+')</span></div>'+
+    '<div class="tile"><span class="tn">'+bn(s.correction)+'</span><span class="tl">সংশোধন দরকার</span></div>';
+  // রিকোয়েস্ট বাটন
+  const hasReq=myPays.some(x=>x.status==='requested');
+  const ok=s.available>=min&&s.available>0;
+  $('bReq').disabled=!ok||!me.payment_number;
+  $('reqHint').innerHTML=!me.payment_number?'আগে প্রোফাইল থেকে পেমেন্ট নাম্বার দিন।'
+    :ok?'উত্তোলনযোগ্য '+money(s.available)+' — রিকোয়েস্ট পাঠালে অ্যাডমিন অনুমোদন দিয়ে '+esc(PM[me.payment_method]||'')+' নাম্বার '+esc(me.payment_number)+'-এ পাঠাবেন।'
+    :'ন্যূনতম '+money(min)+' হলে রিকোয়েস্ট করা যাবে। আরও '+money(Math.max(0,min-s.available))+' আয় দরকার।'+(hasReq?' (একটি রিকোয়েস্ট অপেক্ষমাণ আছে)':'');
+  // ইতিহাস
+  $('payList').innerHTML=myPays.length?myPays.map(x=>{
+    const st=x.status==='paid'?['পরিশোধিত','ok']:x.status==='rejected'?['বাতিল','bad']:['অপেক্ষমাণ (বাকি)','warn'];
+    return '<div class="li"><div class="row"><b style="flex:1">'+money(x.amount)+'</b><span class="badge '+st[1]+'">'+st[0]+'</span></div>'
+      +'<div class="meta">রিকোয়েস্ট: '+fmtDT(x.created_at)+(x.processed_at?'<br>'+(x.status==='paid'?'পরিশোধ':'প্রক্রিয়া')+': '+fmtDT(x.processed_at):'')
+      +'<br>'+esc(PM[x.method]||x.method||'')+' '+esc(x.number||'')+(x.pages?' • '+bn(x.pages)+' পেইজ':'')+(x.note?'<br>নোট: '+esc(x.note):'')+'</div></div>';
+  }).join(''):'<div class="empty" style="padding:18px 6px">এখনো কোনো পেমেন্ট ইতিহাস নেই</div>';
+  // কিতাব অনুযায়ী আয়
+  const ids=Object.keys(s.byBook);
+  $('bookEarn').innerHTML=ids.length?ids.map(id=>{
+    const b=booksById[id],x=s.byBook[id];
+    return '<div class="kv" style="display:block"><div class="row" style="justify-content:space-between"><b>'+esc(b?b.name:'কিতাব')+'</b><b>'+money(x.earned)+'</b></div>'
+      +barSeg(x.approved,x.pending,x.correction,x.n)
+      +'<div class="pgt"><span>অনুমোদিত '+bn(x.approved)+' • বাকি '+bn(x.pending)+' • সংশোধন '+bn(x.correction)+'</span><span>রেট '+rateTxt(rateOf(b))+'</span></div></div>';
+  }).join(''):'<div class="empty" style="padding:18px 6px">এখনো কোনো পেইজ প্রুফড করেননি</div>';
+  // সংশোধন দরকার
+  const cs=myProofs.filter(p=>p.review_status==='correction');
+  $('corrCard').hidden=!cs.length;
+  $('corrList').innerHTML=cs.slice(0,50).map(p=>{const b=booksById[String(p.book_id)];
+    return '<div class="li"><div class="row"><b style="flex:1">'+esc(b?b.name:'কিতাব')+' — '+esc(p.stem)+'</b><a class="badge bad" href="view.html?book='+enc(p.book_id)+'&page='+enc(p.stem)+'">খুলুন</a></div>'
+      +(p.review_note?'<div class="meta">অ্যাডমিন: '+esc(p.review_note)+'</div>':'')+'</div>';}).join('')+(cs.length>50?'<div class="hint">আরও '+bn(cs.length-50)+'টি আছে…</div>':'');
+  // ভুলের হার সতর্কতা
+  const reviewed=s.approved+s.correction, wp=Number(S.warn_pct!=null?S.warn_pct:20), wm=Number(S.warn_min!=null?S.warn_min:5);
+  const pct=reviewed?Math.round(s.correction/reviewed*100):0;
+  $('warnBox').innerHTML=(reviewed>=wm&&pct>=wp)?'<div class="noticebox bad"><b>সতর্কতা:</b> রিভিউ হওয়া '+bn(reviewed)+'টি পেইজের মধ্যে '+bn(s.correction)+'টিতে ভুল ধরা পড়েছে ('+bn(pct)+'%)। দয়া করে মনোযোগ দিয়ে প্রুফ করুন — ভুল পেইজে আয় গোনা হয় না।</div>':'';
+  // প্রোফাইলে কিতাব-ভিত্তিক অগ্রগতি
+  renderProfProg();
+}
+function progLine(b,mine,tot,done){
+  const total=Number(b&&b.total_pages)||0;
+  if(total>0){
+    const pct=Math.min(100,done/total*100), left=Math.max(0,total-done);
+    return '<div class="pg"><i style="width:'+pct+'%"></i></div><div class="pgt"><span>সম্পন্ন '+bn(done)+' / '+bn(total)+' ('+bn(Math.round(pct))+'%)</span><span>বাকি '+bn(left)+'</span></div>';
+  }
+  return '<div class="pgt"><span>মোট সম্পন্ন '+bn(done)+' পেইজ</span></div>';
+}
+function renderProfProg(){
+  if(!sum)return;
+  const ids=Object.keys(sum.byBook);
+  $('profProg').innerHTML=ids.length?'<b style="display:block;margin-bottom:8px">আমার কাজ — কিতাব অনুযায়ী</b>'+ids.map(id=>{
+    const b=booksById[id],x=sum.byBook[id];
+    return '<div style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><span><b>'+esc(b?b.name:'কিতাব')+'</b></span><span class="sub">আমার '+bn(x.n)+' পেইজ</span></div>'
+      +progLine(b,x.n,0,bookCounts[id]!=null?bookCounts[id]:x.n)+'</div>';
+  }).join(''):'';
+}
+
+// ---- পেমেন্ট রিকোয়েস্ট ----
+$('bReq').onclick=async()=>{
+  $('bReq').disabled=true; await loadMoney();
+  const s=sum, min=minPayout(); if(!s){toast('তথ্য আনা যায়নি, আবার চেষ্টা করুন',true);return;}
+  if(!me.payment_number){toast('আগে পেমেন্ট নাম্বার দিন',true);return;}
+  if(s.available<min||s.available<=0){toast('ন্যূনতম '+money(min)+' হলে রিকোয়েস্ট করা যাবে',true);return;}
+  $('rqAvail').textContent=money(s.available); $('rqMin').textContent=money(min);
+  $('rqPmL').textContent=(PM[me.payment_method]||'পেমেন্ট')+' নাম্বার'; $('rqPm').textContent=me.payment_number;
+  $('rqAmt').value=s.available; $('rqAmt').max=s.available; $('rqErr').textContent=''; $('rqDlg').showModal();
+};
+$('rqCancel').onclick=()=>$('rqDlg').close();
+$('rqSend').onclick=async()=>{
+  const btn=$('rqSend'); btn.disabled=true;
+  try{
+    await loadMoney(); const s=sum, min=minPayout(), amt=App.r2($('rqAmt').value);
+    if(!Number.isFinite(amt)||amt<=0)throw new Error('সঠিক পরিমাণ দিন');
+    if(amt<min)throw new Error('ন্যূনতম '+money(min)+' চাইতে হবে');
+    if(amt>s.available)throw new Error('উত্তোলনযোগ্য '+money(s.available)+'-এর বেশি চাওয়া যাবে না');
+    await App.sb.post('payments',{user_id:String(me.id),user_name:me.full_name,amount:amt,pages:s.approved,method:me.payment_method,number:me.payment_number,status:'requested'});
+    App.log('payment_request',money(amt)+' • '+(PM[me.payment_method]||'')+' '+me.payment_number);
+    $('rqDlg').close(); toast('পেমেন্ট রিকোয়েস্ট পাঠানো হয়েছে'); loadMoney();
+  }catch(e){ $('rqErr').textContent=/payments/i.test(e.message)&&/404|PGRST205|42P01/i.test(e.message)?'পেমেন্ট টেবিল নেই — অ্যাডমিন supabase_v2.sql চালাননি':e.message; }
+  finally{ btn.disabled=false; }
+};
+
+// ================= কিতাব তালিকা + অগ্রগতির বার =================
+async function loadCounts(){
+  try{
+    let rows;
+    try{ rows=await App.sb.post('rpc/book_proof_counts',{}); if(!Array.isArray(rows))throw new Error('bad'); }
+    catch(e){ const all=await App.getAll('page_proofs?select=book_id,stem&order=book_id.asc,stem.asc'); const m={}; all.forEach(r=>m[r.book_id]=(m[r.book_id]||0)+1); rows=Object.entries(m).map(([book_id,n])=>({book_id,n})); }
+    bookCounts={}; rows.forEach(r=>bookCounts[String(r.book_id)]=Number(r.n)||0);
+    renderBooks(); renderProfProg();
+  }catch(e){ /* টেবিল নেই: বার ছাড়াই চলবে */ }
+}
 function renderBooks(){
   const q=$('q').value.trim().toLowerCase();
   const list=books.filter(b=>!q||(b.name||'').toLowerCase().includes(q)||(b.author||'').toLowerCase().includes(q));
   $('empty').hidden=list.length>0;
-  $('grid').innerHTML=list.map(b=>`<button class="book" data-id="${esc(b.id)}">
+  $('grid').innerHTML=list.map(b=>{
+    const id=String(b.id), done=bookCounts[id]||0, total=Number(b.total_pages)||0, mine=sum&&sum.byBook[id]?sum.byBook[id].n:0;
+    const prog=total>0
+      ?'<div class="pg"><i style="width:'+Math.min(100,done/total*100)+'%"></i></div><small>'+bn(done)+'/'+bn(total)+' পেইজ • বাকি '+bn(Math.max(0,total-done))+'</small>'
+      :(done?'<small>'+bn(done)+' পেইজ সম্পন্ন</small>':'');
+    return `<button class="book" data-id="${esc(b.id)}">
     <div class="cv">${b.cover_url?`<img src="${esc(b.cover_url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{innerHTML:App.ic('book')}))">`:App.ic('book')}</div>
-    <div class="bt"><b>${esc(b.name)}</b><small>${esc(b.author||'')}</small></div></button>`).join('');
+    <div class="bt"><b>${esc(b.name)}</b><small>${esc(b.author||'')}</small>
+      <div class="bp">${prog}</div>
+      <span class="rt">রেট ${rateTxt(rateOf(b))}/পেইজ${mine?' • আমার '+bn(mine):''}</span></div></button>`;}).join('');
 }
 $('grid').onclick=e=>{const b=e.target.closest('.book');if(b)location.href='view.html?book='+encodeURIComponent(b.dataset.id);};
 $('q').oninput=renderBooks;
 
 async function load(){
   $('spin').classList.add('on');
-  try{ books=await App.sb.get('books?select=*&order=created_at.desc'); renderBooks(); }
+  try{ books=await App.sb.get('books?select=*&order=created_at.desc'); booksById=Object.fromEntries(books.map(b=>[String(b.id),b])); renderBooks(); }
   catch(e){ toast('কিতাব লোড হয়নি: '+e.message,true); }
   finally{ $('spin').classList.remove('on'); }
+  loadCounts(); loadMoney();
 }
-$('bReload').onclick=()=>{load();loadCount();}; load();
+$('bReload').onclick=()=>{load();loadCount();loadNotices();}; load();
 
 // edit payment number
 $('bEdit').onclick=()=>{
@@ -205,8 +439,107 @@ $('dSave').onclick=async()=>{
   try{
     const r=await App.sb.patch('app_users?id=eq.'+encodeURIComponent(me.id),{payment_method:m,payment_number:v.phone});
     me=r[0]||{...me,payment_method:m,payment_number:v.phone}; renderProfile(); $('dlg').close(); toast('সংরক্ষিত হয়েছে');
+    App.log('payment_number_changed',(PM[m]||m)+' '+v.phone); renderMoney();
   }catch(e){$('dErr').textContent=e.message;}
 };
+
+// ================= লিডারবোর্ড =================
+let rankP='day', rankCache={};
+async function loadRank(){
+  $('rankSpin').classList.add('on');
+  try{
+    const since=rankP==='day'?App.startOfDay():rankP==='week'?(()=>{const d=App.startOfDay();d.setDate(d.getDate()-6);return d;})():null;
+    const key=rankP, c=rankCache[key];
+    let rows, names;
+    if(c&&Date.now()-c.t<60000){rows=c.rows;names=c.names;}
+    else{
+      try{ rows=await App.sb.post('rpc/leaderboard',{p_since:since?since.toISOString():null}); if(!Array.isArray(rows))throw new Error('bad'); }
+      catch(e){
+        let all; const f=since?'&created_at=gte.'+enc(since.toISOString()):'';
+        try{ all=await App.getAll('page_proofs?select=user_id,review_status,book_id,stem'+f+'&order=user_id.asc,book_id.asc,stem.asc'); all=all.filter(r=>r.review_status!=='correction'); }
+        catch(e2){ all=await App.getAll('page_proofs?select=user_id,book_id,stem&order=user_id.asc,book_id.asc,stem.asc'); }
+        const m={}; all.forEach(r=>m[r.user_id]=(m[r.user_id]||0)+1);
+        rows=Object.entries(m).map(([user_id,n])=>({user_id,n})).sort((a,b)=>b.n-a.n);
+      }
+      names={}; (await App.sb.get('app_users?select=id,full_name&limit=5000')).forEach(u=>names[String(u.id)]=u.full_name||'');
+      rankCache[key]={t:Date.now(),rows,names};
+    }
+    rows=rows.filter(r=>Number(r.n)>0).map(r=>({id:String(r.user_id),n:Number(r.n)}));
+    const meId=String(me.id), idx=rows.findIndex(r=>r.id===meId);
+    const top=rows.slice(0,20), html=[];
+    const row=(r,i)=>'<div class="lbr '+(r.id===meId?'me ':'')+(i<3?'r'+(i+1):'')+'"><span class="rk">'+bn(i+1)+'</span><span class="nm">'+esc(names[r.id]||'ইউজার')+(r.id===meId?' (আপনি)':'')+'</span><span class="ct">'+bn(r.n)+' পেইজ</span></div>';
+    top.forEach((r,i)=>html.push(row(r,i)));
+    if(idx>=20)html.push('<div class="sub" style="text-align:center;margin:6px 0">⋮</div>',row(rows[idx],idx));
+    $('rankList').innerHTML=html.length?html.join(''):'<div class="empty">এই সময়ে এখনো কেউ কোনো পেইজ প্রুফড করেননি — প্রথম হওয়ার সুযোগ আপনার!</div>';
+    const lab={day:'আজ',week:'এই সপ্তাহে',all:'সব মিলিয়ে'}[rankP];
+    $('myRank').textContent=idx<0?lab+' আপনার কোনো পেইজ নেই — একটি পেইজ প্রুফ করলেই তালিকায় আসবেন!'
+      :idx===0?lab+' আপনি ১ নম্বরে! মাশাআল্লাহ, এগিয়ে থাকুন।'
+      :lab+' আপনার অবস্থান '+bn(idx+1)+' নম্বর • পরের জনের থেকে '+bn(rows[idx-1].n-rows[idx].n)+' পেইজ পিছনে';
+  }catch(e){ $('rankList').innerHTML='<div class="empty">লিডারবোর্ড আনা যায়নি: '+esc(e.message)+'</div>'; }
+  finally{ $('rankSpin').classList.remove('on'); }
+}
+$('rankChips').onclick=e=>{const b=e.target.closest('button[data-p]');if(!b)return;rankP=b.dataset.p;
+  document.querySelectorAll('#rankChips button').forEach(x=>x.classList.toggle('on',x===b));loadRank();};
+
+// ================= নোটিশ / ঘোষণা (কাস্টম ডায়ালগ) =================
+const NK='kp_notice_seen_'+me.id;
+const seenSet=()=>{try{return new Set(JSON.parse(localStorage.getItem(NK)||'[]').map(String));}catch(e){return new Set();}};
+const saveSeen=s=>{try{localStorage.setItem(NK,JSON.stringify([...s].slice(-300)));}catch(e){}};
+let allNotices=[], nList=[], nIdx=0, nMarkAll=true;
+const KIND={notice:'ঘোষণা',review:'রিভিউ',payment:'পেমেন্ট'};
+async function loadNotices(){
+  try{
+    allNotices=await App.sb.get('notices?or='+enc('(user_id.is.null,user_id.eq.'+me.id+')')+'&order=created_at.desc&limit=40');
+    const seen=seenSet(), joined=me.created_at?new Date(me.created_at).getTime()-86400000:0;
+    const fresh=allNotices.filter(n=>!seen.has(String(n.id))&&new Date(n.created_at).getTime()>=joined).reverse();
+    $('bNotices').innerHTML=App.ic('bell')+'নোটিশ ও ঘোষণা'+(fresh.length?' <span class="tbadge">'+bn(fresh.length)+'</span>':'');
+    if(fresh.length&&!$('nDlg').open&&!$('gDlg').open)openNotices(fresh,true);
+  }catch(e){ /* notices টেবিল নেই */ }
+}
+function showNotice(){
+  const n=nList[nIdx]; if(!n)return;
+  $('nKind').textContent=KIND[n.kind]||'নোটিশ'; $('nDate').textContent=fmtDT(n.created_at);
+  $('nTitle').textContent=n.title||''; $('nBody').textContent=n.body||'';
+  $('nPrev').hidden=nIdx===0; $('nNext').hidden=nIdx>=nList.length-1; $('nOk').textContent=nIdx>=nList.length-1?'ঠিক আছে':'বন্ধ করুন';
+  $('nDots').innerHTML=nList.length>1?nList.map((_,i)=>'<i class="'+(i===nIdx?'on':'')+'"></i>').join(''):'';
+}
+function openNotices(list,mark){ nList=list; nIdx=0; nMarkAll=mark; showNotice(); if(!$('nDlg').open)$('nDlg').showModal(); }
+$('nPrev').onclick=()=>{nIdx=Math.max(0,nIdx-1);showNotice();};
+$('nNext').onclick=()=>{nIdx=Math.min(nList.length-1,nIdx+1);showNotice();};
+$('nOk').onclick=()=>$('nDlg').close();
+$('nDlg').addEventListener('close',()=>{ const s=seenSet(); nList.forEach(n=>s.add(String(n.id))); saveSeen(s); loadNoticesBadge(); });
+function loadNoticesBadge(){ const seen=seenSet(); const c=allNotices.filter(n=>!seen.has(String(n.id))).length;
+  $('bNotices').innerHTML=App.ic('bell')+'নোটিশ ও ঘোষণা'+(c?' <span class="tbadge">'+bn(c)+'</span>':''); }
+$('bNotices').onclick=async()=>{ await loadNotices(); if(!allNotices.length){toast('এখনো কোনো নোটিশ নেই');return;} if(!$('nDlg').open)openNotices(allNotices.slice(),false); };
+
+// ================= প্রথমবারের গাইড =================
+const GUIDE=[
+  ['book','আসসালামু আলাইকুম, স্বাগতম!','এই অ্যাপে কিতাবের পেইজ দেখে ভুল শুধরে প্রুফ করবেন। কাজের বিনিময়ে প্রতি অনুমোদিত পেইজে নির্দিষ্ট রেটে আয় হবে।'],
+  ['tasks','১. কিতাব বেছে নিন','"টাস্ক" ট্যাবে কিতাবের কার্ডে চাপ দিন। প্রতিটি কার্ডে রেট ও অগ্রগতির বার (কত পেইজ হলো, কত বাকি) দেখা যায়।'],
+  ['check','২. প্রুফ করে "প্রুফড" চাপুন','টেক্সট ঠিক করে সেভ করুন, তারপর প্রুফড চিহ্ন দিন। অ্যাডমিন পরে আপনার কাজ রিভিউ করে "অনুমোদিত" বা "সংশোধন দরকার" চিহ্ন দেবেন।'],
+  ['wallet','৩. আয় ও পেমেন্ট','"পেমেন্ট" ট্যাবে মোট আয়, বাকি টাকা ও ইতিহাস দেখুন। নির্দিষ্ট পরিমাণ হলে "পেমেন্ট রিকোয়েস্ট" চেপে টাকা চাইতে পারবেন।'],
+  ['trophy','৪. লিডারবোর্ড, নোটিশ ও সাহায্য','"র‍্যাংক" ট্যাবে সবার মধ্যে আপনার অবস্থান দেখুন। অ্যাডমিনের ঘোষণা ডায়ালগে আসবে। সমস্যা হলে প্রোফাইল থেকে টিকেট খুলুন।']
+];
+let gI=0;
+function showGuide(){
+  const g=GUIDE[gI];
+  $('gStep').innerHTML='<div class="gi">'+App.ic(g[0])+'</div><h3>'+esc(g[1])+'</h3><p>'+esc(g[2])+'</p>';
+  $('gDots').innerHTML=GUIDE.map((_,i)=>'<i class="'+(i===gI?'on':'')+'"></i>').join('');
+  $('gPrev').hidden=gI===0; $('gNext').textContent=gI===GUIDE.length-1?'শুরু করি':'পরের'; $('gSkip').hidden=gI===GUIDE.length-1;
+}
+function openGuide(){ gI=0; showGuide(); $('gDlg').showModal(); }
+$('gNext').onclick=()=>{ if(gI>=GUIDE.length-1){$('gDlg').close();return;} gI++; showGuide(); };
+$('gPrev').onclick=()=>{ gI=Math.max(0,gI-1); showGuide(); };
+$('gSkip').onclick=()=>$('gDlg').close();
+$('gDlg').addEventListener('close',()=>{ try{localStorage.setItem('kp_guide_v1_'+me.id,'1');}catch(e){} loadNotices(); });
+$('bGuide').onclick=openGuide;
+(function firstRun(){
+  let done=false; try{done=localStorage.getItem('kp_guide_v1_'+me.id)==='1';}catch(e){}
+  if(!done)setTimeout(openGuide,500); else loadNotices();
+})();
+setInterval(()=>{ if(document.visibilityState==='visible')loadNotices(); },180000);
+if(location.hash==='#prof')tab('prof');   // support.html থেকে ফিরলে প্রোফাইল ট্যাব খুলুক
+else if(location.hash==='#pay')tab('pay');
 })();
 </script>
 </body>
