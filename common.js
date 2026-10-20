@@ -117,7 +117,8 @@ const ICONS={
  device:'<rect x="2" y="4" width="20" height="12" rx="2"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/>',
  check:'<polyline points="20 6 9 17 4 12"/>',wallet:'<path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>'
 };
-const ic=(n,c)=>'<svg class="i '+(c||'')+'" viewBox="0 0 24 24" aria-hidden="true">'+(ICONS[n]||'')+'</svg>';
+const LOGO='<svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12h40v40H12z M32 3.7 60.3 32 32 60.3 3.7 32z" stroke-width="2" style="stroke:#f2d27a"/><path d="M32 42V25 M32 25C28 22 22.5 22 19 23.5V40.5C22.5 39 28 39 32 42 M32 25C36 22 41.5 22 45 23.5V40.5C41.5 39 36 39 32 42" stroke-width="2.4" style="stroke:#f3fff9"/><path d="M35.5 32.5l3.2 3.2 5-6.4" stroke-width="2.6" style="stroke:#f2d27a"/></g><path class="mk-sp" d="M54 6c.5 3.6 1.9 5 5.5 5.5-3.6.5-5 1.9-5.5 5.5-.5-3.6-1.9-5-5.5-5.5C52.1 11 53.5 9.6 54 6z" style="fill:#fff7d6"/></svg>';
+const ic=(n,c)=>n==='mark'?LOGO:'<svg class="i '+(c||'')+'" viewBox="0 0 24 24" aria-hidden="true">'+(ICONS[n]||'')+'</svg>';
 function hydrateIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(e=>{e.innerHTML=ic(e.dataset.ic,e.dataset.cls)+(e.innerHTML||'');e.removeAttribute('data-ic');});}
 const $=id=>document.getElementById(id);
 function btnBusy(b,on){if(b)b.disabled=!!on;}

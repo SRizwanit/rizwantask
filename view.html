@@ -165,6 +165,9 @@
   body:not(.is-admin) #btnSettings,body:not(.is-admin) #apiBox,body:not(.is-admin) #btnAutoApi,
   body:not(.is-admin) #dlg,body:not(.is-admin) #dlgApi,body:not(.is-admin) #dlgCfg{display:none!important}
 </style>
+<link rel="stylesheet" href="theme.css">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0b5f4c">
 </head>
 <body>
 
@@ -308,6 +311,7 @@
 <!-- API বাছাই -->
 <dialog id="dlgApi">
   <h3>API</h3>
+  <small id="apiOffNote" hidden style="color:var(--err);font-weight:600">এপি আই এখন বন্ধ (অ্যাডমিন সেটিংস থেকে চালু করুন) — চালানো যাবে না, শুধু কনফিগ দেখা/বদলানো যাবে।</small>
   <button id="apiPick1" class="apiPick" type="button"><b>এপি আই - ১</b><span class="s" id="apiSub1"></span></button>
   <button id="apiPick2" class="apiPick" type="button"><b>এপি আই - ২</b><span class="s" id="apiSub2"></span></button>
   <div class="row"><button id="apiPickClose" type="button">বন্ধ</button></div>
@@ -516,6 +520,25 @@ window.__KP_READY = (async () => {
       if (p) c.prompt = p;
     });
   })();
+  // ---------- অ্যাডমিনের এপি আই চালু/বন্ধ (app_settings.api_enabled; কলাম না থাকলে/ফাঁকা থাকলে চালু ধরা হয়) ----------
+  let apiEnabled = !(CTX.settings && CTX.settings.api_enabled === false);
+  let apiChecking = false;
+  function applyApiFlag() {
+    const box = $('apiBox'); if (box) box.classList.toggle('off', !apiEnabled);
+    setApiUI(); applyAutoApi();
+  }
+  async function refreshApiFlag() {
+    try {
+      const r = (await App.sb.get('app_settings?id=eq.1&select=api_enabled&limit=1'))[0];
+      const on = !(r && r.api_enabled === false);
+      if (on !== apiEnabled) {
+        apiEnabled = on; applyApiFlag();
+        if (!on) { if (apiRun) apiRun.ctrl.abort(); toast('অ্যাডমিন এপি আই বন্ধ করেছেন', true); }
+        else { toast('এপি আই চালু হয়েছে'); maybeAutoOcr(); }
+      }
+    } catch (e) {}                                   // নেটওয়ার্ক/কলাম সমস্যায় আগের অবস্থাই থাকে
+    return apiEnabled;
+  }
   const bookPre = () => { const b = trimSl(cfg.book); return b ? b + '_' : ''; };   // সবসময় আন্ডারস্কোর (_)
   const pagesDir = () => bookPre() + trimSl(cfg.pagesDir || 'pages');
   const textsDir = () => bookPre() + trimSl(cfg.textsDir || 'texts');
@@ -765,6 +788,7 @@ window.__KP_READY = (async () => {
       else if (ta.disabled) t += ' • লোড হচ্ছে…';
       else t += d ? ' • অসংরক্ষিত' : (sha ? ' • সেভড' : ' • টেক্সট নেই (পেস্ট করে সেভ করুন)');
       if (proofed.has(stem)) t += ' • প্রুফড';
+      if (!apiEnabled) t += ' • এপি আই বন্ধ';
       if (apiRun) t += ' • ' + API_NAME[apiRun.n] + ' চলছে' + (apiRun.stem !== stem ? ' (' + apiRun.stem + ')' : '') + (apiRun.chars ? ' ' + apiRun.chars + ' অক্ষর' : '') + '…';
       st.textContent = t;
       st.className = (d || loadErr) ? 'dirty' : '';
@@ -1771,7 +1795,7 @@ window.__KP_READY = (async () => {
   function setApiUI() {
     const b = $('btnApi');
     b.classList.toggle('run', !!apiRun);
-    b.title = apiRun ? API_NAME[apiRun.n] + ' চলছে — থামাতে চাপুন' : 'API — ছবি থেকে টেক্সট (এপি আই - ১) / টেক্সট প্রুফিং (এপি আই - ২)';
+    b.title = !apiEnabled ? 'এপি আই বন্ধ (অ্যাডমিন বন্ধ রেখেছেন)' : apiRun ? API_NAME[apiRun.n] + ' চলছে — থামাতে চাপুন' : 'API — ছবি থেকে টেক্সট (এপি আই - ১) / টেক্সট প্রুফিং (এপি আই - ২)';
     updateStatus();
   }
 
@@ -1806,6 +1830,11 @@ window.__KP_READY = (async () => {
   async function runApi(n, opts) {
     const auto = !!(opts && opts.auto);
     if (apiRun) { toast(API_NAME[apiRun.n] + ' চলছে — শেষ হওয়া পর্যন্ত অপেক্ষা করুন', true); return; }
+    if (apiChecking) return;
+    apiChecking = true;
+    try { await refreshApiFlag(); } finally { apiChecking = false; }   // চালানোর ঠিক আগে অ্যাডমিনের সর্বশেষ অবস্থা দেখে নেওয়া
+    if (!apiEnabled) { if (!auto) toast('এপি আই বন্ধ আছে — অ্যাডমিন চালু করলে ব্যবহার করা যাবে', true); return; }
+    if (apiRun) return;
     if (cur < 0 || ta.disabled) { toast('আগে পেইজ লোড হতে দিন', true); return; }
     const c = cfg['api' + n], nm = API_NAME[n];
     const key = (c.key || (n === 2 ? cfg.api1.key : '') || '').trim();
@@ -1857,6 +1886,7 @@ window.__KP_READY = (async () => {
     clearTimeout(autoT);
     autoT = setTimeout(() => {
       const c = cfg.api1;
+      if (!apiEnabled) return;                                            // অ্যাডমিন এপি আই বন্ধ রেখেছেন
       if (!c.auto || autoPause || apiRun) return;
       if (!c.key || !c.model || !c.prompt) return;                       // এপি আই - ১ কনফিগার করা নেই
       if (cur < 0 || ta.disabled || loadErr || initing) return;           // পেইজ/টেক্সট ঠিকমতো লোড হয়নি
@@ -1873,13 +1903,14 @@ window.__KP_READY = (async () => {
     const b = $('btnAutoApi'), on = !!cfg.api1.auto;
     b.classList.toggle('on', on); b.classList.toggle('off', !on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.title = on
+    b.title = !apiEnabled ? 'এপি আই বন্ধ — অ্যাডমিন বন্ধ রেখেছেন, তাই অটো OCR চলবে না' : on
       ? 'অটো OCR চালু (সবুজ) — ' + API_NAME[1] + '-এর Key দেওয়া থাকলে টেক্সট ফাঁকা পেইজ খুললে নিজে থেকে চলবে। বন্ধ করতে চাপুন'
       : 'অটো OCR বন্ধ (লাল) — API কনফিগার থাকলেও নিজে থেকে চলবে না (হাতে API আইকন থেকে চালানো যাবে)। চালু করতে চাপুন';
   }
   $('btnAutoApi').onclick = () => {
     const c = cfg.api1;
     c.auto = !c.auto; autoPause = false; saveCfg(); applyAutoApi();
+    if (!apiEnabled) { toast('এপি আই এখন বন্ধ (অ্যাডমিন) — চালু হলে এই সেটিং কাজ করবে', true); return; }
     if (c.auto) {
       toast(!c.key ? 'অটো OCR চালু — তবে ' + API_NAME[1] + '-এর Key এখনো দেওয়া নেই' : 'অটো OCR চালু (সবুজ)');
       maybeAutoOcr();
@@ -1892,6 +1923,7 @@ window.__KP_READY = (async () => {
   function openApiPick() {
     [1, 2].forEach(n => { $('apiSub' + n).textContent = API_DEF[n].sub + ' • ' + (cfg['api' + n].model || '—') + ' • ' + keyState(n)
                                                   + (n === 1 && cfg.api1.auto && cfg.api1.key ? ' • অটো চালু' : ''); });
+    $('apiOffNote').hidden = apiEnabled;
     const d = $('dlgApi'); if (!d.open) d.showModal();
   }
   function openApiCfg(n) {
@@ -1953,7 +1985,10 @@ window.__KP_READY = (async () => {
   // সব <select> কে নিজস্ব ফন্টের ড্রপডাউনে রূপান্তর
   ['sel', 'ttsRate', 'cEngine', 'cVoiceBn', 'cVoiceAr', 'cVoiceEn'].forEach(id => enhanceSelect($(id)));
 
-  applyZoom(); applyFont(); applySwap(); applyAuto(); applyAutoApi(); updateStatus();
+  applyZoom(); applyFont(); applySwap(); applyAuto(); applyAutoApi(); applyApiFlag(); updateStatus();
+  // অ্যাডমিনের এপি আই চালু/বন্ধ লাইভ ধরতে: ট্যাবে ফিরলে ও প্রতি ৩০ সেকেন্ডে সর্বশেষ অবস্থা দেখে নেয়
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshApiFlag(); });
+  setInterval(() => { if (document.visibilityState === 'visible') refreshApiFlag(); }, 30000);
   if (!cfg.token && CTX.isAdmin) openSettings();   // অ্যাডমিন: টোকেন না থাকলে সেটিংস খুলবে; ইউজারের টোকেন Supabase থেকে আসে
   else init();
 })();

@@ -1,0 +1,101 @@
+/* RizwanTask theme — জামরুদ (emerald) + সোনালি ঝিলিমিলি
+   সব পেইজে common.css / view.html-এর inline স্টাইলের পরে লোড হয় (তাই রঙ ও সাজ এখান থেকেই নিয়ন্ত্রিত)। */
+:root{
+  --canvas:#e3f0e9;--bg:#f8fcfa;--fg:#12261f;--muted:#587068;--line:#c6dbd0;--panel:#eaf4ef;--panel2:#d9e9e0;
+  --pri:#0e7a62;--pri2:#16a583;--pri-fg:#fff;--ok:#15803d;--warn:#b45309;--err:#dc2626;
+  --gold:#c9972b;--gold2:#f2d27a;--glow:rgba(14,122,98,.18);
+  --tile:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%230e7a62' stroke-opacity='.11' stroke-width='1'%3E%3Crect x='14' y='14' width='36' height='36'/%3E%3Crect x='14' y='14' width='36' height='36' transform='rotate(45 32 32)'/%3E%3C/g%3E%3C/svg%3E");
+  --sp1:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'%3E%3Cg fill='%23c9972b'%3E%3Cpath transform='translate(60 70) scale(1.3)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(210 40) scale(0.8)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(400 110) scale(1.1)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(470 300) scale(0.9)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(120 260) scale(0.7)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(300 330) scale(1.2)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(40 430) scale(0.9)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(250 470) scale(0.8)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(430 490) scale(1.0)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3C/g%3E%3C/svg%3E");--sp2:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'%3E%3Cg fill='%23c9972b'%3E%3Cpath transform='translate(150 150) scale(0.9)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(350 30) scale(0.7)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(490 190) scale(1.2)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(80 360) scale(1.0)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(230 250) scale(0.8)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(380 420) scale(0.9)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(300 200) scale(0.6)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(170 500) scale(1.1)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(20 200) scale(0.7)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3C/g%3E%3C/svg%3E");
+}
+@media(prefers-color-scheme:dark){:root{
+  --canvas:#06110e;--bg:#0c1b16;--fg:#e4f1ea;--muted:#8db0a3;--line:#1f3b32;--panel:#12261f;--panel2:#1a3329;
+  --pri:#3fd3a6;--pri2:#27b88c;--pri-fg:#04130e;--ok:#6fd08c;--warn:#fbbf24;--err:#f87171;
+  --gold:#e8c56f;--gold2:#f6dc94;--glow:rgba(63,211,166,.2);
+  --tile:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%233fd3a6' stroke-opacity='.09' stroke-width='1'%3E%3Crect x='14' y='14' width='36' height='36'/%3E%3Crect x='14' y='14' width='36' height='36' transform='rotate(45 32 32)'/%3E%3C/g%3E%3C/svg%3E");
+  --sp1:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'%3E%3Cg fill='%23f2d27a'%3E%3Cpath transform='translate(60 70) scale(1.3)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(210 40) scale(0.8)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(400 110) scale(1.1)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(470 300) scale(0.9)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(120 260) scale(0.7)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(300 330) scale(1.2)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(40 430) scale(0.9)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(250 470) scale(0.8)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(430 490) scale(1.0)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3C/g%3E%3C/svg%3E");--sp2:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'%3E%3Cg fill='%23f2d27a'%3E%3Cpath transform='translate(150 150) scale(0.9)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(350 30) scale(0.7)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(490 190) scale(1.2)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(80 360) scale(1.0)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(230 250) scale(0.8)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(380 420) scale(0.9)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(300 200) scale(0.6)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(170 500) scale(1.1)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3Cpath transform='translate(20 200) scale(0.7)' d='M0-6Q0 0 6 0Q0 0 0 6Q0 0-6 0Q0 0 0-6z'/%3E%3C/g%3E%3C/svg%3E");
+}}
+
+/* ---------- ব্যাকগ্রাউন্ড: ইসলামি অষ্টভুজ তারার নকশা + মিটমিট করা সোনালি তারা ---------- */
+body{background:var(--canvas)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 70% at 50% -10%,var(--glow),transparent 60%),var(--tile)}
+body::after,html::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-size:520px 520px}
+body::after{background-image:var(--sp1);animation:kpTw 4.8s ease-in-out infinite alternate}
+html::after{background-image:var(--sp2);background-position:130px 90px;animation:kpTw 6.4s ease-in-out -2.4s infinite alternate}
+@keyframes kpTw{0%{opacity:.12}50%{opacity:.75}100%{opacity:.2}}
+
+/* ---------- বোতাম: প্রাইমারিতে গ্রেডিয়েন্ট + মাঝে মাঝে ঝিলিক ---------- */
+button.primary{background:linear-gradient(135deg,var(--pri),var(--pri2));border-color:var(--pri);color:var(--pri-fg);
+  position:relative;overflow:hidden;box-shadow:0 3px 12px var(--glow)}
+button.primary::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.42) 50%,transparent 62%);
+  transform:translateX(-130%);animation:kpShine 5.5s ease-in-out infinite}
+@keyframes kpShine{0%,62%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
+.tabs button.on,.seg input:checked+span{background:linear-gradient(135deg,var(--pri),var(--pri2));border-color:var(--pri);color:var(--pri-fg)}
+
+/* ---------- কার্ড / ডায়ালগ: সোনালি ঢালাই কিনারা ---------- */
+.card{border:1px solid transparent;
+  background:linear-gradient(var(--bg),var(--bg)) padding-box,linear-gradient(140deg,var(--gold),var(--line) 38%,var(--line) 62%,var(--gold)) border-box;
+  box-shadow:0 10px 30px var(--glow)}
+.li{background:linear-gradient(var(--bg),var(--bg))}
+.li,.kv{border-color:var(--line)}
+dialog{border:1px solid var(--gold);box-shadow:0 24px 70px rgba(0,0,0,.4)}
+dialog::backdrop{background:radial-gradient(circle at 50% 30%,rgba(14,122,98,.35),rgba(2,12,9,.7));backdrop-filter:blur(2px)}
+#toast,#ltoast{border-left:3px solid var(--gold)}
+
+/* ---------- হেডার (task/admin): গাঢ় জামরুদ ব্যান্ড ---------- */
+header.top{background:linear-gradient(100deg,#083f33,#0b5f4c 55%,#0e7a62);border-bottom:1px solid var(--gold);
+  box-shadow:0 4px 18px rgba(8,63,51,.28);color:#fff}
+header.top h2{color:#fff}
+header.top button{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+header.top button:hover{background:rgba(255,255,255,.26)}
+header.top .logo-sm{background:linear-gradient(145deg,#0a4f40,#12896d);box-shadow:inset 0 0 0 1px var(--gold2)}
+header.top .logo-sm .mark{width:24px;height:24px}
+
+/* ---------- লোগো (ভেক্টর মার্ক: অষ্টভুজ তারা + কিতাব + টিক) ---------- */
+.mark{display:block;width:100%;height:100%;overflow:visible}
+.mark .mk-sp{transform-box:fill-box;transform-origin:center;animation:kpPop 3.2s ease-in-out infinite}
+@keyframes kpPop{0%,70%,100%{transform:scale(.55);opacity:.5}85%{transform:scale(1.15);opacity:1}}
+.brand .logo{width:72px;height:72px;border-radius:22px;padding:10px;color:#fff;
+  background:linear-gradient(145deg,#0a4f40,#12896d);box-shadow:0 10px 26px var(--glow),inset 0 0 0 1px var(--gold)}
+.brand .logo .i{width:34px;height:34px}
+.brand h1{background:linear-gradient(100deg,var(--pri),var(--gold) 55%,var(--pri));-webkit-background-clip:text;background-clip:text;color:transparent;
+  background-size:220% 100%;animation:kpSheen 6s linear infinite}
+@keyframes kpSheen{to{background-position:-220% 0}}
+
+/* ---------- কিতাবের কার্ড, প্রোফাইল, নেভ ---------- */
+.book{background:linear-gradient(var(--bg),var(--bg))}
+.book:hover{border-color:var(--gold);box-shadow:0 12px 28px var(--glow)}
+.book .cv{background:var(--tile),var(--panel2)}
+.av{background:linear-gradient(145deg,#0a4f40,#16a583);color:#fff;box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--gold)}
+nav.bottom{background:linear-gradient(0deg,var(--bg),var(--panel));box-shadow:0 -6px 20px var(--glow)}
+nav.bottom button.on{box-shadow:inset 0 2px 0 var(--gold)}
+.badge.ok{background:rgba(22,163,74,.16)}
+
+/* ---------- অন/অফ সুইচ (অ্যাডমিন: এপি আই) ---------- */
+label.sw{display:flex;align-items:center;gap:12px;cursor:pointer;margin:12px 0 4px;user-select:none}
+label.sw input{position:absolute;opacity:0;width:0;height:0;padding:0;border:0}
+label.sw .sw-t{position:relative;flex:none;width:54px;height:30px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);transition:background .2s,border-color .2s}
+label.sw .sw-t::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35);transition:transform .22s cubic-bezier(.3,1.4,.5,1)}
+label.sw input:checked+.sw-t{background:linear-gradient(135deg,var(--pri),var(--pri2));border-color:var(--gold)}
+label.sw input:checked+.sw-t::after{transform:translateX(24px)}
+label.sw input:focus-visible+.sw-t{outline:2px solid var(--pri);outline-offset:2px}
+label.sw input:disabled+.sw-t{opacity:.55}
+label.sw b{font-size:15px}
+.apistate{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:99px}
+.apistate.on{background:rgba(22,163,74,.16);color:var(--ok)}.apistate.off{background:rgba(220,38,38,.14);color:var(--err)}
+
+/* ---------- view.html: হেডার/ফুটার/পড়ার জায়গা ---------- */
+#hdr,footer{background:linear-gradient(180deg,var(--bg),var(--panel))}
+#hdr{box-shadow:0 1px 0 var(--gold)}
+footer{box-shadow:0 -1px 0 rgba(201,151,43,.5)}
+#status{background:linear-gradient(90deg,var(--panel),var(--bg))}
+.pane .body{background:var(--bg)}
+.bar{background:linear-gradient(90deg,var(--panel),var(--bg))}
+#apiBox.off button{opacity:.5}
+#apiBox.off #btnApi{border-style:dashed}
+
+@media(prefers-reduced-motion:reduce){
+  body::after,html::after,button.primary::after,.brand h1,.mark .mk-sp{animation:none}
+  body::after,html::after{opacity:.35}
+}

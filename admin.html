@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0b5f4c">
 </head>
 <body>
 <header class="top">
@@ -41,6 +44,11 @@
 
   <!-- SETTINGS -->
   <section id="pSet" hidden style="max-width:640px">
+    <div class="card" style="margin-bottom:16px">
+      <div class="row"><b style="flex:1">এপি আই নিয়ন্ত্রণ (চালু / বন্ধ)</b><span class="apistate on" id="sApiState">চালু</span></div>
+      <p class="hint">বন্ধ করলে view.html-এ এপি আই - ১ (ছবি থেকে টেক্সট, অটো OCR সহ) ও এপি আই - ২ (প্রুফিং) কেউই চালাতে পারবে না — টেক্সট আর নিজে থেকে আসবে না, পেইজের স্ট্যাটাস লাইনে <b>"টেক্সট নেই (পেস্ট করে সেভ করুন) • এপি আই বন্ধ"</b> দেখাবে। টগল করলেই সাথে সাথে সংরক্ষিত হয় (ইউজাররা সর্বোচ্চ ~৩০ সেকেন্ডের মধ্যে বা পেইজে ফিরলেই নতুন অবস্থা পায়)।</p>
+      <label class="sw" for="sApiOn"><input id="sApiOn" type="checkbox" checked><span class="sw-t"></span><b id="sApiLbl">এপি আই চালু</b></label>
+    </div>
     <div class="card">
       <b>GitHub সেটিংস (সব কিতাবের ডিফল্ট)</b>
       <p class="hint">কোনো কিতাবে নিজস্ব GitHub Username / Repo না দিলে এই ডিফল্ট ব্যবহার হবে। মানগুলো Supabase-এ থাকে এবং সব কিতাবের view.html-এ প্রযোজ্য হয়।</p>
@@ -210,6 +218,7 @@ async function loadSettings(){
     $('sProofF').value=r.proof_file||DEF.proof_file;$('sProofD').value=r.proof_dir||DEF.proof_dir;
     $('sTok').value=r.github_token||'';$('sKey').value=r.gemini_api_key||'';$('sMod').value=r.gemini_model||'';
     $('sTmp').value=r.gemini_temp==null?'':r.gemini_temp;$('sP1').value=r.prompt_ocr||'';$('sP2').value=r.prompt_proof||'';
+    showApi(r.api_enabled!==false);
   }catch(e){toast(e.message,true);}
 }
 $('sSave').onclick=async()=>{
@@ -219,8 +228,33 @@ $('sSave').onclick=async()=>{
     pages_dir:sl($('sPages').value)||DEF.pages_dir,texts_dir:sl($('sTexts').value)||DEF.texts_dir,
     proof_file:$('sProofF').value.trim().replace(/^\/+/,'')||DEF.proof_file,proof_dir:sl($('sProofD').value)||DEF.proof_dir,
     github_token:$('sTok').value.trim(),gemini_api_key:$('sKey').value.trim(),gemini_model:$('sMod').value.trim().replace(/^models\//,''),
-    gemini_temp:Number.isFinite(t)?Math.min(2,Math.max(0,t)):null,prompt_ocr:$('sP1').value.trim(),prompt_proof:$('sP2').value.trim()};
-  try{await App.sb.upsert('app_settings?on_conflict=id',row);S={...S,...row};renderBooks();toast('সেটিংস সংরক্ষিত হয়েছে');}catch(e){toast(e.message,true);}
+    gemini_temp:Number.isFinite(t)?Math.min(2,Math.max(0,t)):null,prompt_ocr:$('sP1').value.trim(),prompt_proof:$('sP2').value.trim(),
+    api_enabled:$('sApiOn').checked};
+  try{await App.sb.upsert('app_settings?on_conflict=id',row);S={...S,...row};renderBooks();toast('সেটিংস সংরক্ষিত হয়েছে');}
+  catch(e){
+    if(/api_enabled/i.test(e.message)){ // নতুন কলাম এখনো যোগ হয়নি: বাকি সেটিংস অন্তত সংরক্ষণ হোক
+      const{api_enabled,...rest}=row;
+      try{await App.sb.upsert('app_settings?on_conflict=id',rest);S={...S,...rest};renderBooks();toast('সেটিংস সংরক্ষিত, কিন্তু এপি আই চালু/বন্ধ সংরক্ষণ হয়নি — Supabase SQL Editor-এ supabase_api_toggle.sql চালান',true);}
+      catch(e2){toast(e2.message,true);}
+    }else toast(e.message,true);
+  }
+};
+
+/* ---------- API চালু/বন্ধ (টগল করলেই সাথে সাথে সংরক্ষণ) ---------- */
+function showApi(on){
+  $('sApiOn').checked=on;$('sApiLbl').textContent=on?'এপি আই চালু':'এপি আই বন্ধ';
+  const b=$('sApiState');b.textContent=on?'চালু':'বন্ধ';b.className='apistate '+(on?'on':'off');
+}
+$('sApiOn').onchange=async e=>{
+  const on=e.target.checked;e.target.disabled=true;showApi(on);
+  try{
+    let r=await App.sb.patch('app_settings?id=eq.1',{api_enabled:on});
+    if(!r.length)r=await App.sb.upsert('app_settings?on_conflict=id',{id:1,api_enabled:on});
+    S={...S,api_enabled:on};toast(on?'এপি আই চালু করা হয়েছে':'এপি আই বন্ধ করা হয়েছে');
+  }catch(x){
+    showApi(!on);
+    toast(/api_enabled/i.test(x.message)?'api_enabled কলাম নেই — Supabase SQL Editor-এ supabase_api_toggle.sql চালান':x.message,true);
+  }finally{e.target.disabled=false;}
 };
 
 loadUsers();fetchS().then(loadBooks);
