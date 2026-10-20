@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<script src="theme-init.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>প্রোফাইল - কিতাব প্রুফিং</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0b5f4c">
+</head>
+<body>
+<header class="top">
+  <span class="logo-sm" data-ic="mark"></span>
+  <h2 id="ttl">প্রোফাইল</h2>
+  <span id="myCnt" class="cnt" hidden title="আপনার সম্পন্ন টাস্ক"><span data-ic="check"></span><b id="cntN">০</b><small>টি সম্পন্ন</small></span>
+  <button id="bTheme" class="sm" data-theme-toggle title="থিম"></button>
+  <button id="bAdmin" class="sm" hidden><span data-ic="shield"></span>অ্যাডমিন</button>
+  <button id="bOut" class="sm" hidden title="লগআউট"><span data-ic="logout"></span><span class="lbl">লগআউট</span></button>
+</header>
+
+<main class="wrap wide" style="padding-bottom:90px">
+  <!-- PROFILE -->
+  <section id="pProf" style="max-width:440px;margin:0 auto">
+    <div class="card" style="text-align:center">
+      <div class="av" id="av"></div>
+      <h3 id="pName" style="margin:0 0 4px"></h3>
+      <span class="badge" id="pRole">ইউজার</span>
+      <div class="stat">
+        <span class="stI" data-ic="check"></span>
+        <div class="stT"><span class="stN" id="stN">০</span><span class="stL"> টি টাস্ক সম্পন্ন</span></div>
+      </div>
+      <div class="stat" style="margin-top:10px" id="incCard">
+        <span class="stI" data-ic="wallet"></span>
+        <div class="stT"><span class="stN" id="incN">০.০০ ৳</span><span class="stL"> মোট আয়</span>
+          <div class="sub" id="incSub" style="margin-top:2px"></div></div>
+      </div>
+      <div style="text-align:left;margin-top:16px">
+        <div class="kv"><span>মোবাইল নাম্বার</span><b id="pPhone"></b></div>
+        <div class="kv"><span id="pPmL">বিকাশ নাম্বার</span><b id="pPm"></b></div>
+        <div class="kv"><span>যোগ দিয়েছেন</span><b id="pDate"></b></div>
+      </div>
+      <div style="text-align:left;margin-top:16px" id="profProg"></div>
+      <label class="f" style="text-align:left">থিম (দিন/রাত)</label>
+      <div class="seg" id="themeSeg">
+        <label><input type="radio" name="th" value="auto"><span>সিস্টেম</span></label>
+        <label><input type="radio" name="th" value="light"><span>লাইট</span></label>
+        <label><input type="radio" name="th" value="dark"><span>ডার্ক</span></label>
+      </div>
+      <button id="bEdit" class="block" style="margin-top:16px"><span data-ic="edit"></span>পেমেন্ট নাম্বার পরিবর্তন</button>
+      <button id="bOut2" class="danger block" style="margin-top:10px"><span data-ic="logout"></span>লগআউট</button>
+      <button id="bNotices" class="help block" style="margin-top:10px"><span data-ic="bell"></span>নোটিশ ও ঘোষণা</button>
+      <button id="bGuide" class="help block" style="margin-top:10px"><span data-ic="info"></span>ব্যবহারের গাইড</button>
+      <button id="bTicket" class="help block" style="margin-top:10px"><span data-ic="ticket"></span>টিকেট খুলুন</button>
+      <button id="bWa" class="help wa block" style="margin-top:10px"><span data-ic="whatsapp"></span>হোয়াটসঅ্যাপে যোগাযোগ করুন</button>
+    </div>
+  </section>
+</main>
+
+<!-- নিচের নেভিগেশন: টাস্ক / পেমেন্ট / র‍্যাংক (প্রোফাইল এখন উপরের টুলবারে) -->
+<nav class="bottom" id="nav">
+  <button id="nTask"><span data-ic="tasks" data-cls="lg"></span>টাস্ক</button>
+  <button id="nPay"><span data-ic="wallet" data-cls="lg"></span>পেমেন্ট</button>
+  <button id="nRank"><span data-ic="trophy" data-cls="lg"></span>র‍্যাংক</button>
+</nav>
+
+<dialog id="dlg">
+  <h3>পেমেন্ট নাম্বার</h3>
+  <label class="f">মাধ্যম</label>
+  <div class="seg">
+    <label><input type="radio" name="pm" value="bkash"><span>বিকাশ</span></label>
+    <label><input type="radio" name="pm" value="nagad"><span>নগদ</span></label>
+  </div>
+  <label class="f" for="pn">নাম্বার</label>
+  <input id="pn" type="tel" inputmode="tel" maxlength="18">
+  <div class="err" id="dErr"></div>
+  <div class="acts"><button id="dCancel">বন্ধ</button><button id="dSave" class="primary">সংরক্ষণ</button></div>
+</dialog>
+
+<!-- নোটিশ / ঘোষণা (কাস্টম ডায়ালগ) -->
+<dialog id="nDlg" class="big">
+  <div class="row"><span class="badge gold" id="nKind">নোটিশ</span><span class="sub" id="nDate" style="margin-left:auto"></span></div>
+  <h3 id="nTitle" style="margin-top:8px"></h3>
+  <div class="nbody" id="nBody"></div>
+  <div class="dots" id="nDots"></div>
+  <div class="acts"><button id="nPrev">আগের</button><button id="nNext">পরের</button><button id="nOk" class="primary">ঠিক আছে</button></div>
+</dialog>
+
+<style>
+.logo-sm{display:flex;width:30px;height:30px;border-radius:9px;background:var(--pri);color:var(--pri-fg);align-items:center;justify-content:center}.logo-sm .i{width:18px;height:18px}
+header.top h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:480px){header.top #bOut .lbl{display:none}}
+/* প্রোফাইলের সাপোর্ট বোতাম (নোটিশ / গাইড / টিকেট / হোয়াটসঅ্যাপ) */
+button.help{color:var(--pri);border-color:var(--pri);background:linear-gradient(var(--bg),var(--bg)) padding-box;font-weight:600}
+button.help:hover{background:var(--panel2)}
+button.help .i{width:18px;height:18px}
+/* হেডারে সম্পন্ন টাস্কের সংখ্যা */
+.cnt{display:inline-flex;align-items:center;gap:5px;flex:none;padding:4px 10px 4px 8px;border-radius:99px;background:rgba(242,210,122,.16);border:1px solid rgba(242,210,122,.55);color:#fff;line-height:1;white-space:nowrap}
+.cnt .i{width:14px;height:14px;color:#f2d27a;stroke-width:2.6}
+.cnt b{font-size:15px;font-weight:700;color:#f7e2a0;font-variant-numeric:tabular-nums}
+.cnt small{font-size:11.5px;opacity:.9}
+/* প্রোফাইলে সম্পন্ন টাস্কের কার্ড */
+.stat{display:flex;align-items:center;justify-content:center;gap:14px;margin:16px 0 0;padding:14px 16px;border-radius:14px;text-align:left;
+  background:linear-gradient(135deg,rgba(11,95,76,.10),rgba(217,171,67,.16));border:1px solid rgba(217,171,67,.5)}
+.stat .stI{display:flex;width:44px;height:44px;border-radius:50%;align-items:center;justify-content:center;flex:none;background:linear-gradient(145deg,#0a4f40,#16a583);color:#f7e2a0}
+.stat .stI .i{width:22px;height:22px;stroke-width:2.6}
+.stT{min-width:0}
+nav.bottom button{font-size:11.5px}
+/* নেভিগেশন বার সবসময় স্ক্রিনের নিচে স্থির থাকবে (ব্রাউজারের অ্যাড্রেসবার দেখা/লুকানোর সময়ও) */
+nav.bottom{position:fixed!important;left:0;right:0;bottom:0;top:auto!important;z-index:50;
+  padding-bottom:env(safe-area-inset-bottom,0px);will-change:transform;backface-visibility:hidden}
+nav.bottom[hidden]{display:none!important}
+.stN{font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.stL{font-size:16px;font-weight:600;color:var(--muted);margin-left:2px}
+</style>
+<script src="common.js"></script>
+<script>
+(async () => {
+const {$,esc,toast,Phone,bn,money,fmtDT,enc}=App;
+let me=await App.requireAuth(), isAdmin=App.isAdminPhone(me.phone), books=[];
+const PM={bkash:'বিকাশ',nagad:'নগদ'};
+let S={}, booksById={}, bookCounts={}, myProofs=[], myPays=[], sum=null;
+
+// লগআউট
+$('bOut').onclick=$('bOut2').onclick=()=>{App.log('logout','');setTimeout(()=>App.logout(),150);};
+// সাপোর্ট: টিকেট খুলুন → support.html ; হোয়াটসঅ্যাপ → অ্যাডমিনের WhatsApp (wa.me API)
+$('bTicket').onclick=()=>location.href='support.html';
+$('bWa').onclick=()=>{
+  const m='আসসালামু আলাইকুম, আমি কিতাব প্রুফিং অ্যাপের ইউজার। নাম: '+(me.full_name||'-')+'। ফোন নাম্বার: '+(me.phone||'-')+'। আমার একটি সাহায্য প্রয়োজন।';
+  window.open('https://wa.me/'+App.ADMIN_WA+'?text='+encodeURIComponent(m),'_blank','noopener');
+};
+// ব্যবহারের গাইড: টাস্ক পেইজের অ্যানিমেটেড গাইড খোলে
+$('bGuide').onclick=()=>location.href='task.html#guide';
+// নেভিগেশন: টাস্ক / পেমেন্ট / র‍্যাংক
+$('nTask').onclick=()=>location.href='task.html#task';
+$('nPay').onclick=()=>location.href='task.html#pay';
+$('nRank').onclick=()=>location.href='task.html#rank';
+if(isAdmin){ $('bAdmin').hidden=false; $('bOut').hidden=false; $('bAdmin').onclick=()=>location.href='admin.html'; $('pRole').textContent='অ্যাডমিন'; }
+App.hydrateIcons();
+
+// ---- নিচের নেভিগেশন বার: ব্রাউজার টুলবার/স্ক্রল বদলালেও স্ক্রিনের ভিতরে রাখুন ----
+(function pinNav(){
+  const nav=$('nav'); if(!nav)return; let raf=0;
+  function fix(){
+    raf=0; if(nav.hidden)return;
+    nav.style.transform='';
+    const vv=window.visualViewport, r=nav.getBoundingClientRect();
+    const vh=vv?(vv.height+vv.offsetTop):window.innerHeight;
+    const lim=Math.min(vh,window.innerHeight||vh);
+    if(r.bottom>lim+0.5) nav.style.transform='translateY('+(lim-r.bottom)+'px)';
+  }
+  const sched=()=>{ if(!raf)raf=requestAnimationFrame(fix); };
+  window.addEventListener('scroll',sched,{passive:true});
+  window.addEventListener('resize',sched);
+  window.addEventListener('orientationchange',sched);
+  window.addEventListener('pageshow',sched);
+  if(window.visualViewport){ visualViewport.addEventListener('resize',sched); visualViewport.addEventListener('scroll',sched); }
+  document.addEventListener('visibilitychange',sched);
+  sched(); setTimeout(sched,300);
+})();
+
+// ---- থিম সুইচ ----
+function syncThemeSeg(){const r=document.querySelector('#themeSeg input[value='+App.theme.get()+']');if(r)r.checked=true;}
+document.querySelectorAll('#themeSeg input').forEach(r=>r.onchange=()=>{App.theme.set(r.value);App.mountTheme();toast('থিম: '+App.theme.label());});
+syncThemeSeg();
+$('bTheme').addEventListener('click',syncThemeSeg);
+
+// ---- আমার সম্পন্ন টাস্ক (শুধু নিজের প্রুফড পেইজ) ----
+let myCount=null;
+function renderCount(){
+  const t=myCount==null?'–':bn(myCount);
+  $('cntN').textContent=t; $('stN').textContent=t; $('myCnt').hidden=myCount==null;
+}
+let cntBusy=false;
+async function loadCount(){
+  if(cntBusy)return; cntBusy=true;
+  try{
+    let n;
+    try{ // দ্রুত পথ: Supabase ফাংশন (supabase_task_count.sql)
+      n=await App.sb.post('rpc/my_proof_count',{p_user:String(me.id)});
+      n=Number(Array.isArray(n)?n[0]:n); if(!Number.isFinite(n))throw new Error('bad');
+    }catch(e){ // ফাংশন না থাকলে সরাসরি গুনে নিন
+      n=0;
+      for(let off=0;;off+=1000){
+        const r=await App.sb.get('page_proofs?user_id=eq.'+enc(me.id)+'&select=stem&order=stem.asc&limit=1000&offset='+off);
+        n+=r.length; if(r.length<1000)break;
+      }
+    }
+    myCount=n;
+  }catch(e){ /* টেবিল নেই/নেটওয়ার্ক সমস্যা: আগের সংখ্যাই থাকুক */ }
+  finally{ cntBusy=false; renderCount(); }
+}
+// view.html / অন্য পেইজ থেকে ফিরে এলে বা ট্যাবে ফিরলে নতুন করে আনুন
+const refreshAll=()=>{ loadCount(); loadCounts(); loadMoney(); loadNotices(); };
+window.addEventListener('pageshow',e=>{ if(e.persisted)refreshAll(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible')refreshAll(); });
+
+function renderProfile(){
+  $('av').textContent=(me.full_name||'?').trim().charAt(0).toUpperCase();
+  $('pName').textContent=me.full_name; $('pPhone').textContent=me.phone;
+  $('pPmL').textContent=(PM[me.payment_method]||'পেমেন্ট')+' নাম্বার'; $('pPm').textContent=me.payment_number||'-';
+  $('pDate').textContent=me.created_at?new Date(me.created_at).toLocaleDateString('bn-BD'):'-';
+}
+renderProfile(); loadCount();
+
+// ================= আয়ের হিসাব (প্রোফাইলের মোট আয় কার্ড) =================
+async function loadSettings(){
+  try{ S=(await App.sb.get('app_settings?id=eq.1&select=page_rate,min_payout,warn_pct,warn_min&limit=1'))[0]||{}; }
+  catch(e){ S=S||{}; }
+}
+async function fetchMine(){
+  try{ return await App.getAll('page_proofs?user_id=eq.'+enc(me.id)+'&select=book_id,stem,review_status,review_note,rate,created_at,reviewed_at&order=created_at.desc,book_id.asc,stem.asc'); }
+  catch(e){ return await App.getAll('page_proofs?user_id=eq.'+enc(me.id)+'&select=book_id,stem&order=book_id.asc,stem.asc'); }
+}
+let moneyBusy=false;
+async function loadMoney(){
+  if(moneyBusy)return; moneyBusy=true;
+  try{
+    await loadSettings();
+    if(!books.length){ try{ books=await App.sb.get('books?select=*&order=created_at.desc'); booksById=Object.fromEntries(books.map(b=>[String(b.id),b])); }catch(e){} }
+    myProofs=await fetchMine();
+    try{ myPays=await App.getAll('payments?user_id=eq.'+enc(me.id)+'&order=created_at.desc'); }catch(e){ myPays=[]; }
+    sum=App.summarize(myProofs,booksById,S,myPays);
+    renderMoney();
+  }catch(e){ /* নেটওয়ার্ক/টেবিল সমস্যা: আগের তথ্য থাকুক */ }
+  finally{ moneyBusy=false; }
+}
+function renderMoney(){
+  if(!sum)return;
+  const s=sum;
+  $('incN').textContent=money(s.earned);
+  $('incSub').textContent='উত্তোলনযোগ্য '+money(s.available)+(s.pendingAmt>0?' • রিভিউ বাকি '+money(s.pendingAmt):'');
+  renderProfProg();
+}
+function progLine(b,mine,tot,done){
+  const total=Number(b&&b.total_pages)||0;
+  if(total>0){
+    const pct=Math.min(100,done/total*100), left=Math.max(0,total-done);
+    return '<div class="pg"><i style="width:'+pct+'%"></i></div><div class="pgt"><span>সম্পন্ন '+bn(done)+' / '+bn(total)+' ('+bn(Math.round(pct))+'%)</span><span>বাকি '+bn(left)+'</span></div>';
+  }
+  return '<div class="pgt"><span>মোট সম্পন্ন '+bn(done)+' পেইজ</span></div>';
+}
+function renderProfProg(){
+  if(!sum)return;
+  const ids=Object.keys(sum.byBook);
+  $('profProg').innerHTML=ids.length?'<b style="display:block;margin-bottom:8px">আমার কাজ — কিতাব অনুযায়ী</b>'+ids.map(id=>{
+    const b=booksById[id],x=sum.byBook[id];
+    return '<div style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><span><b>'+esc(b?b.name:'কিতাব')+'</b></span><span class="sub">আমার '+bn(x.n)+' পেইজ</span></div>'
+      +progLine(b,x.n,0,bookCounts[id]!=null?bookCounts[id]:x.n)+'</div>';
+  }).join(''):'';
+}
+async function loadCounts(){
+  try{
+    let rows;
+    try{ rows=await App.sb.post('rpc/book_proof_counts',{}); if(!Array.isArray(rows))throw new Error('bad'); }
+    catch(e){ const all=await App.getAll('page_proofs?select=book_id,stem&order=book_id.asc,stem.asc'); const m={}; all.forEach(r=>m[r.book_id]=(m[r.book_id]||0)+1); rows=Object.entries(m).map(([book_id,n])=>({book_id,n})); }
+    bookCounts={}; rows.forEach(r=>bookCounts[String(r.book_id)]=Number(r.n)||0);
+    renderProfProg();
+  }catch(e){ /* টেবিল নেই: বার ছাড়াই চলবে */ }
+}
+loadMoney(); loadCounts();
+
+// ---- পেমেন্ট নাম্বার পরিবর্তন ----
+$('bEdit').onclick=()=>{
+  document.querySelector('#dlg input[value='+(me.payment_method||'bkash')+']').checked=true;
+  $('pn').value=me.payment_number||''; $('dErr').textContent=''; $('dlg').showModal();
+};
+$('dCancel').onclick=()=>$('dlg').close();
+$('dSave').onclick=async()=>{
+  const v=Phone.validate($('pn').value); if(!v.ok){$('dErr').textContent=v.msg;return;}
+  const m=document.querySelector('#dlg input[name=pm]:checked').value;
+  try{
+    const r=await App.sb.patch('app_users?id=eq.'+encodeURIComponent(me.id),{payment_method:m,payment_number:v.phone});
+    me=r[0]||{...me,payment_method:m,payment_number:v.phone}; renderProfile(); $('dlg').close(); toast('সংরক্ষিত হয়েছে');
+    App.log('payment_number_changed',(PM[m]||m)+' '+v.phone); renderMoney();
+  }catch(e){$('dErr').textContent=e.message;}
+};
+
+// ================= নোটিশ / ঘোষণা (কাস্টম ডায়ালগ) =================
+const NK='kp_notice_seen_'+me.id;
+const seenSet=()=>{try{return new Set(JSON.parse(localStorage.getItem(NK)||'[]').map(String));}catch(e){return new Set();}};
+const saveSeen=s=>{try{localStorage.setItem(NK,JSON.stringify([...s].slice(-300)));}catch(e){}};
+let allNotices=[], nList=[], nIdx=0, nMarkAll=true;
+const KIND={notice:'ঘোষণা',review:'রিভিউ',payment:'পেমেন্ট'};
+function loadNoticesBadge(){ const seen=seenSet(); const c=allNotices.filter(n=>!seen.has(String(n.id))).length;
+  $('bNotices').innerHTML=App.ic('bell')+'নোটিশ ও ঘোষণা'+(c?' <span class="tbadge">'+bn(c)+'</span>':''); }
+async function loadNotices(){
+  try{
+    allNotices=await App.sb.get('notices?or='+enc('(user_id.is.null,user_id.eq.'+me.id+')')+'&order=created_at.desc&limit=40');
+    const seen=seenSet(), joined=me.created_at?new Date(me.created_at).getTime()-86400000:0;
+    const fresh=allNotices.filter(n=>!seen.has(String(n.id))&&new Date(n.created_at).getTime()>=joined).reverse();
+    $('bNotices').innerHTML=App.ic('bell')+'নোটিশ ও ঘোষণা'+(fresh.length?' <span class="tbadge">'+bn(fresh.length)+'</span>':'');
+    // নতুন নোটিশের ডায়ালগ টাস্ক পেইজে স্বয়ংক্রিয়ভাবে আসে; এখানে শুধু ব্যাজ আপডেট হয়
+  }catch(e){ /* notices টেবিল নেই */ }
+}
+function showNotice(){
+  const n=nList[nIdx]; if(!n)return;
+  $('nKind').textContent=KIND[n.kind]||'নোটিশ'; $('nDate').textContent=fmtDT(n.created_at);
+  $('nTitle').textContent=n.title||''; $('nBody').textContent=n.body||'';
+  $('nPrev').hidden=nIdx===0; $('nNext').hidden=nIdx>=nList.length-1; $('nOk').textContent=nIdx>=nList.length-1?'ঠিক আছে':'বন্ধ করুন';
+  $('nDots').innerHTML=nList.length>1?nList.map((_,i)=>'<i class="'+(i===nIdx?'on':'')+'"></i>').join(''):'';
+}
+function openNotices(list,mark){ nList=list; nIdx=0; nMarkAll=mark; showNotice(); if(!$('nDlg').open)$('nDlg').showModal(); }
+$('nPrev').onclick=()=>{nIdx=Math.max(0,nIdx-1);showNotice();};
+$('nNext').onclick=()=>{nIdx=Math.min(nList.length-1,nIdx+1);showNotice();};
+$('nOk').onclick=()=>$('nDlg').close();
+$('nDlg').addEventListener('close',()=>{ const s=seenSet(); nList.forEach(n=>s.add(String(n.id))); saveSeen(s); loadNoticesBadge(); });
+$('bNotices').onclick=async()=>{ await loadNotices(); if(!allNotices.length){toast('এখনো কোনো নোটিশ নেই');return;} if(!$('nDlg').open)openNotices(allNotices.slice(),false); };
+loadNotices();
+setInterval(()=>{ if(document.visibilityState==='visible')loadNotices(); },180000);
+})();
+</script>
+</body>
+</html>
