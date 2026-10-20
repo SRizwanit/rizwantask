@@ -9,11 +9,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* আরবি/উর্দু অংশের জন্য নূরে হুদা (Noorehuda) — শুধু আরবি ব্লকের অক্ষরে; বাংলা/ইংরেজি আগের ফন্টেই থাকে।
+     ফন্ট ফাইল: fonts/Noorehuda.ttf (বা .woff2) — ফোনে/পিসিতে ইনস্টল করা থাকলে সেটাই ব্যবহার হয় */
+  @font-face{
+    font-family:"Noorehuda";font-style:normal;font-weight:400;font-display:swap;
+    src:local("Noorehuda"),local("noorehuda"),local("Noorehuda Regular"),
+        url("fonts/Noorehuda.woff2") format("woff2"),url("fonts/Noorehuda.ttf") format("truetype");
+    unicode-range:U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200F,U+0640;
+  }
   :root{
     --bg:#ffffff;--fg:#1b1f27;--muted:#6b7280;--line:#e3e7ee;--panel:#f4f6fa;--panel2:#eaeef5;
     --pri:#2563eb;--pri-fg:#fff;--ok:#16a34a;--warn:#c2410c;--err:#dc2626;--hl:rgba(250,204,21,.38);--hlw:rgba(249,115,22,.5);
     --ui:"Anek Bangla","Noto Sans Bengali","Kalpurush",system-ui,-apple-system,"Segoe UI",sans-serif;
-    --txt:"Noto Serif Bengali","Noto Naskh Arabic","Kalpurush","SolaimanLipi",serif;
+    --txt:"Noorehuda","Noto Serif Bengali","Noto Naskh Arabic","Kalpurush","SolaimanLipi",serif;
   }
   @media (prefers-color-scheme:dark){
     :root{--bg:#14161a;--fg:#e8eaed;--muted:#9aa3b2;--line:#2a2e36;--panel:#1d2127;--panel2:#262b33;
@@ -59,7 +67,8 @@
   #jump{width:72px}
   /* স্ট্যাটাস: হেডারের নিচে পাতলা লাইনে (সবসময় দেখা যায়, খালি থাকলে লুকায়) */
   #status{display:flex;align-items:center;gap:8px;padding:3px 8px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bg)}
-  #stText{flex:1;min-width:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #doneCnt{flex:1;min-width:0;text-align:center;font-size:15px;font-weight:700;color:var(--ok);font-variant-numeric:tabular-nums;line-height:1}
+  #stText{flex:0 1 auto;max-width:62%;margin-left:auto;min-width:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #stText.dirty{color:var(--warn);font-weight:600}
   /* ছবির টুল (ডাউনলোড / Lens / Ai): স্ট্যাটাস লাইনের বাম ফাঁকা জায়গায় */
   #imgTools{display:flex;align-items:center;gap:6px;flex:none}
@@ -125,11 +134,12 @@
   @keyframes ldrSpin{to{transform:rotate(360deg)}}
   @media (prefers-reduced-motion:reduce){.ldr.ind .ring-s{animation:none}}
   textarea{display:block;width:100%;height:100%;border:0;outline:none;resize:none;padding:12px;border-radius:0;
+           direction:ltr;text-align:left;unicode-bidi:normal;   /* সব সময় LTR — আরবি/উর্দু লাইনও বাম দিক থেকে শুরু */
            background:transparent;color:var(--fg);font-family:var(--txt);line-height:1.95;font-size:var(--fs,20px);position:relative;z-index:1}
   /* শোনার সময় হাইলাইট: textarea-র পেছনে একই মাপ/ফন্টের একটি আয়না-স্তর; লেখা স্বচ্ছ, শুধু mark-এর রং দেখা যায় */
   #hl{position:absolute;inset:0;z-index:0;display:none;pointer-events:none;overflow-x:hidden;overflow-y:auto;scrollbar-color:transparent transparent;
       margin:0;border:0;padding:12px;background:transparent;color:transparent;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;
-      unicode-bidi:plaintext;   /* textarea[dir=auto]-র মতো প্রতিটি অনুচ্ছেদের দিক আলাদা (আরবি লাইন ডানে, বাংলা বামে) */
+      direction:ltr;text-align:left;unicode-bidi:normal;   /* textarea-র মতোই সব সময় LTR (বাম দিক থেকে)) */
       font-family:var(--txt);line-height:1.95;font-size:var(--fs,20px);-webkit-text-size-adjust:100%}
   #hl mark{color:transparent;background:var(--hl);border-radius:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
   #hl mark.w{background:var(--hlw)}
@@ -269,6 +279,7 @@
     <button id="btnLens" class="ico" title="এই পেইজের ছবি Google Lens-এ খুলুন (টেক্সট কপি করার জন্য)" aria-label="Google Lens"><svg class="i"><use href="#i-lens"/></svg></button>
     <button id="btnAiCopy" class="ico" title="AI প্রম্পট কপি — GitHub ডাউনলোড অংশ + এই পেইজের ছবির raw লিংক + OCR প্রম্পট (Supabase), একসাথে ক্লিপবোর্ডে" aria-label="AI প্রম্পট কপি"><svg class="i"><use href="#i-sparkle"/></svg></button>
   </span>
+  <span id="doneCnt" hidden title="আপনার সম্পন্ন (প্রুফড) টাস্ক" aria-label="আপনার সম্পন্ন টাস্ক"></span>
   <span id="stText"></span>
 </div>
 
@@ -292,8 +303,8 @@
       <span id="txtInfo" title="খসড়া = এই ব্রাউজারে সংরক্ষিত অসংরক্ষিত খসড়ার সংখ্যা"></span>
     </div>
     <div class="body">
-      <div id="hl" dir="auto" aria-hidden="true"></div>
-      <textarea id="ta" spellcheck="false" dir="auto" disabled></textarea>
+      <div id="hl" dir="ltr" aria-hidden="true"></div>
+      <textarea id="ta" spellcheck="false" dir="ltr" disabled></textarea>
     </div>
   </section>
 </main>
@@ -647,6 +658,34 @@ window.__KP_READY = (async () => {
   let ownerNames = new Map();  // user_id → নাম (শুধু অ্যাডমিনের জন্য)
   let proofDb = true;          // page_proofs টেবিল আছে কি না (না থাকলে পুরনো আচরণ)
   const encU = encodeURIComponent;
+
+  // ---- আমার সম্পন্ন টাস্ক (task.html-এর মতোই: শুধু নিজের প্রুফড পেইজ, সব কিতাব মিলিয়ে) — স্ট্যাটাস লাইনের মাঝখানে বাংলা সংখ্যায় ----
+  let doneCnt = null, doneBusy = false, doneAgain = false;
+  async function loadDone() {
+    if (doneBusy) { doneAgain = true; return; }
+    doneBusy = true;
+    try {
+      let n;
+      try {   // দ্রুত পথ: Supabase ফাংশন (supabase_task_count.sql)
+        n = await App.sb.post('rpc/my_proof_count', {p_user: String(ME)});
+        n = Number(Array.isArray(n) ? n[0] : n); if (!Number.isFinite(n)) throw new Error('bad');
+      } catch (e) {   // ফাংশন না থাকলে সরাসরি গুনে নিন
+        n = 0;
+        for (let off = 0; ; off += 1000) {
+          const r = await App.sb.get('page_proofs?user_id=eq.' + encodeURIComponent(ME) + '&select=stem&order=stem.asc&limit=1000&offset=' + off);
+          n += r.length; if (r.length < 1000) break;
+        }
+      }
+      doneCnt = n;
+    } catch (e) { /* টেবিল নেই/নেটওয়ার্ক সমস্যা: আগের সংখ্যাই থাকুক */ }
+    finally {
+      doneBusy = false;
+      const el = $('doneCnt');
+      if (el) { el.textContent = doneCnt == null ? '' : bnNum(doneCnt); el.hidden = doneCnt == null; }
+      if (doneAgain) { doneAgain = false; loadDone(); }
+    }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadDone(); });
   let legacyProof = false;   // তালিকা পুরনো জায়গা (রুট) থেকে পড়া হয়েছে কি না
   let cur = -1, sha = null, orig = '';
   let seq = 0, busy = false, loadErr = false;
@@ -1350,6 +1389,7 @@ window.__KP_READY = (async () => {
       refresh(); return false;
     }
     if (val) proofed.add(stem); else proofed.delete(stem);
+    if (proofDb) loadDone();
     if (jerr) toast('প্রুফড চিহ্ন সংরক্ষিত হয়েছে, কিন্তু GitHub-এর প্রুফড ফাইল হালনাগাদ হয়নি: ' + jerr.message, true, 6000);
     refresh();
     return true;
@@ -2623,7 +2663,7 @@ window.__KP_READY = (async () => {
   // সব <select> কে নিজস্ব ফন্টের ড্রপডাউনে রূপান্তর
   ['sel', 'ttsRate', 'cEngine', 'cVoiceBn', 'cVoiceAr', 'cVoiceEn'].forEach(id => enhanceSelect($(id)));
 
-  applyZoom(); applyFont(); applySwap(); applyAuto(); applyAutoApi(); applyApiFlag(); updateStatus();
+  applyZoom(); applyFont(); applySwap(); applyAuto(); applyAutoApi(); applyApiFlag(); updateStatus(); loadDone();
   // অ্যাডমিনের এপি আই চালু/বন্ধ লাইভ ধরতে: ট্যাবে ফিরলে ও প্রতি ৩০ সেকেন্ডে সর্বশেষ অবস্থা দেখে নেয়
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshApiFlag(); });
   setInterval(() => { if (document.visibilityState === 'visible') refreshApiFlag(); }, 30000);

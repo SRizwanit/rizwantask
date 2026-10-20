@@ -16,7 +16,7 @@
 <header class="top">
   <span class="logo-sm" data-ic="mark"></span>
   <h2 id="ttl">কাজের তালিকা</h2>
-  <span id="myCnt" class="cnt" hidden title="আপনার সম্পন্ন টাস্ক"><span data-ic="check"></span><b id="cntN">০</b><small>সম্পন্ন</small></span>
+  <span id="myCnt" class="cnt" hidden title="আপনার সম্পন্ন টাস্ক"><span data-ic="check"></span><b id="cntN">০</b><small>টি সম্পন্ন</small></span>
   <button id="bAdmin" class="sm" hidden><span data-ic="shield"></span>অ্যাডমিন</button>
   <button id="bOut" class="sm" hidden><span data-ic="logout"></span>লগআউট</button>
 </header>
@@ -44,7 +44,7 @@
       <span class="badge" id="pRole">ইউজার</span>
       <div class="stat">
         <span class="stI" data-ic="check"></span>
-        <div class="stT"><div class="stN" id="stN">০</div><div class="stL">আপনার সম্পন্ন টাস্ক</div></div>
+        <div class="stT"><span class="stN" id="stN">০</span><span class="stL"> টি টাস্ক সম্পন্ন</span></div>
       </div>
       <div style="text-align:left;margin-top:16px">
         <div class="kv"><span>মোবাইল নাম্বার</span><b id="pPhone"></b></div>
@@ -95,8 +95,7 @@ header.top h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:now
 .stat .stI{display:flex;width:44px;height:44px;border-radius:50%;align-items:center;justify-content:center;flex:none;background:linear-gradient(145deg,#0a4f40,#16a583);color:#f7e2a0}
 .stat .stI .i{width:22px;height:22px;stroke-width:2.6}
 .stN{font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
-.stL{font-size:13px;color:var(--muted);margin-top:2px}
-@media(max-width:380px){.cnt small{display:none}}
+.stL{font-size:16px;font-weight:600;color:var(--muted);margin-left:2px}
 </style>
 <script src="common.js"></script>
 <script>
