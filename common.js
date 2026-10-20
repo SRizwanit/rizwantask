@@ -2,7 +2,7 @@
 (function(){
 const SB_URL='https://opluyjvhaibcznaidiod.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wbHV5anZoYWliY3puYWlkaW9kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjQ3ODcyMSwiZXhwIjoyMTA4MDU0NzIxfQ.3tCEEoIuyvrPt7a_9RNYzsjNwijAxA7ixQVLRpk-Blk';
-const ADMIN_PHONE='01714656343', ADMIN_WA='8801714656443';
+const ADMIN_PHONE='01714656343', ADMIN_WA='8801714656343';
 const SK='kp_session_v1', DK='kp_device_v1';
 const enc=encodeURIComponent;
 
