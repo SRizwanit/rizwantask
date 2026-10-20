@@ -106,6 +106,20 @@
   #img:not([src]){cursor:default}
   .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--muted);pointer-events:none}
   .msg:empty{display:none}
+  /* ছবি লোডিং: গোল রিং + শতাংশ (অ্যানিমেটেড) */
+  .ldr{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .ldr-ring{position:relative;width:92px;height:92px}
+  .ldr-ring svg{width:92px;height:92px;transform:rotate(-90deg);overflow:visible}
+  .ldr-ring .trk{fill:none;stroke:var(--line);stroke-width:6}
+  .ldr-ring .bar{fill:none;stroke:var(--pri);stroke-width:6;stroke-linecap:round;transition:stroke .3s}
+  .ldr-ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}
+  .ldr-ring .num small{font-size:12px;font-weight:600;margin-left:1px;color:var(--muted)}
+  .ldr.full .bar{stroke:var(--ok)}
+  .ldr.ind .ring-s{animation:ldrSpin 1s linear infinite;transform-origin:50% 50%}
+  .ldr.ind .bar{stroke-dasharray:60 400!important;stroke-dashoffset:0!important}
+  .ldr-sub{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;min-height:14px}
+  @keyframes ldrSpin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.ldr.ind .ring-s{animation:none}}
   textarea{display:block;width:100%;height:100%;border:0;outline:none;resize:none;padding:12px;border-radius:0;
            background:transparent;color:var(--fg);font-family:var(--txt);line-height:1.95;font-size:var(--fs,20px);position:relative;z-index:1}
   /* শোনার সময় হাইলাইট: textarea-র পেছনে একই মাপ/ফন্টের একটি আয়না-স্তর; লেখা স্বচ্ছ, শুধু mark-এর রং দেখা যায় */
@@ -219,6 +233,7 @@
     <symbol id="i-api" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
     <symbol id="i-bolt" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
     <symbol id="i-lens" viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.5"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M10 3l1.9 5.6L17.5 10.5l-5.6 1.9L10 18l-1.9-5.6L2.5 10.5l5.6-1.9z"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z"/></symbol>
   </defs>
 </svg>
 
@@ -253,6 +268,7 @@
       <button id="zOut">−</button><span id="zVal">100%</span><button id="zIn">+</button><button id="zFit">ফিট</button>
       <button id="btnDl" class="ico" title="এই পেইজের মূল ছবি ডাউনলোড করুন" aria-label="ডাউনলোড"><svg class="i"><use href="#i-download"/></svg></button>
       <button id="btnLens" class="ico" title="এই পেইজের ছবি Google Lens-এ খুলুন (টেক্সট কপি করার জন্য)" aria-label="Google Lens"><svg class="i"><use href="#i-lens"/></svg></button>
+      <button id="btnAiCopy" class="ico" title="AI প্রম্পট কপি — GitHub ডাউনলোড অংশ + এই পেইজের ছবির raw লিংক + OCR প্রম্পট (Supabase), একসাথে ক্লিপবোর্ডে" aria-label="AI প্রম্পট কপি"><svg class="i"><use href="#i-sparkle"/></svg></button>
     </div>
     <div class="body" id="imgBox">
       <img id="img" alt="" title="বড় করে দেখতে ক্লিক করুন">
@@ -622,6 +638,7 @@ window.__KP_READY = (async () => {
   let restoreOnce = true, viewReady = false;
   const imgCache = new Map(); // name -> Promise<objectURL>
   let apiRun = null;          // চলমান API: {n, stem, ctrl, chars}
+  let defaultBranch = '';     // রিপোর ডিফল্ট ব্রাঞ্চ (raw লিংকের জন্য)
   let repoPrivate = null;     // রিপো প্রাইভেট কিনা (Google Lens-এর জন্য): true/false/null=অজানা
   let autoT = 0, autoPause = false;   // অটো OCR: ডিবাউন্স টাইমার; Key/কোটা ত্রুটিতে সাময়িক বিরতি
   const autoTried = new Set();        // এই সেশনে যেসব পেইজে API-১ একবার চলেছে (অটো বা হাতে)
@@ -869,16 +886,73 @@ window.__KP_READY = (async () => {
   const applySwap = () => $('main').classList.toggle('swap', !!cfg.swap);
 
   // ---------- ছবি ----------
+  // ---------- ছবি লোডের শতাংশ ----------
+  const imgPct = new Map();            // ছবির নাম → শতাংশ (null = মোট মাপ অজানা)
+  const ldr = {on: false, target: 0, shown: 0, raf: 0};
+  const bnNum = n => String(n).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+  const LDR_R = 40, LDR_C = 2 * Math.PI * LDR_R;
+  function setImgMsg(t) {              // সাধারণ লেখা বসানো (লোডার সরে যায়)
+    ldr.on = false; cancelAnimationFrame(ldr.raf); ldr.raf = 0;
+    $('imgMsg').textContent = t;
+  }
+  function ldrShow(pct) {
+    const m = $('imgMsg');
+    m.innerHTML = '<div class="ldr' + (pct == null ? ' ind' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100">'
+      + '<div class="ldr-ring"><svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="' + LDR_R + '"/>'
+      + '<g class="ring-s"><circle class="bar" cx="50" cy="50" r="' + LDR_R + '" stroke-dasharray="' + LDR_C + '" stroke-dashoffset="' + LDR_C + '"/></g></svg>'
+      + '<div class="num"><span class="n">০</span><small>%</small></div></div><div class="ldr-sub"></div></div>';
+    ldr.on = true; ldr.shown = 0; ldr.target = pct;
+    cancelAnimationFrame(ldr.raf); ldr.raf = 0;
+    ldrStep();
+  }
+  function ldrSet(pct) {
+    if (!ldr.on) return;
+    const box = $('imgMsg').querySelector('.ldr'); if (box) box.classList.toggle('ind', pct == null);
+    ldr.target = pct;
+    if (!ldr.raf) ldr.raf = requestAnimationFrame(ldrStep);
+  }
+  function ldrStep() {                 // দেখানো সংখ্যা ধীরে ধীরে লক্ষ্য শতাংশের দিকে এগোয় (মসৃণ অ্যানিমেশন)
+    ldr.raf = 0;
+    if (!ldr.on) return;
+    const box = $('imgMsg').querySelector('.ldr'); if (!box) return;
+    const bar = box.querySelector('.bar'), n = box.querySelector('.n'), sub = box.querySelector('.ldr-sub');
+    if (ldr.target == null) { n.textContent = '…'; sub.textContent = ''; return; }
+    const d = ldr.target - ldr.shown;
+    ldr.shown = Math.abs(d) < 0.4 ? ldr.target : ldr.shown + Math.max(Math.abs(d) * 0.2, 0.5) * Math.sign(d);
+    const v = Math.max(0, Math.min(100, ldr.shown));
+    bar.setAttribute('stroke-dashoffset', String(LDR_C * (1 - v / 100)));
+    n.textContent = bnNum(Math.round(v));
+    box.classList.toggle('full', Math.round(v) >= 100);
+    box.setAttribute('aria-valuenow', String(Math.round(v)));
+    if (ldr.shown !== ldr.target) ldr.raf = requestAnimationFrame(ldrStep);
+  }
+  function imgProg(name, pct) {
+    imgPct.set(name, pct);
+    if (cur >= 0 && images[cur] && images[cur].name === name) ldrSet(pct);
+  }
   function getImage(name) {
     if (imgCache.has(name)) return imgCache.get(name);
     const p = (async () => {
       const r = await api('/contents/' + epath(pagesDir() + '/' + name) + refQ(),
                           {cache: 'default', headers: {'Accept': 'application/vnd.github.raw+json'}});
       if (!r.ok) throw new Error(await errMsg(r));
-      return URL.createObjectURL(await r.blob());
+      const ext = (name.split('.').pop() || '').toLowerCase();
+      const type = {jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp'}[ext] || 'image/jpeg';
+      const total = parseInt(r.headers.get('Content-Length') || '0', 10) || 0;
+      if (!r.body || !r.body.getReader) { imgProg(name, null); const b = await r.blob(); imgProg(name, 100); return URL.createObjectURL(b); }
+      imgProg(name, total ? 0 : null);
+      const rd = r.body.getReader(), parts = []; let got = 0;
+      for (;;) {
+        const {done, value} = await rd.read();
+        if (done) break;
+        parts.push(value); got += value.length;
+        if (total) imgProg(name, Math.min(99, got / total * 100));
+      }
+      imgProg(name, 100);
+      return URL.createObjectURL(new Blob(parts, {type}));
     })();
     imgCache.set(name, p);
-    p.catch(() => imgCache.delete(name));
+    p.catch(() => { imgCache.delete(name); imgPct.delete(name); });
     if (imgCache.size > 6) {
       const k = imgCache.keys().next().value;
       imgCache.get(k).then(u => URL.revokeObjectURL(u)).catch(() => {});
@@ -978,6 +1052,47 @@ window.__KP_READY = (async () => {
   }
   $('btnLens').onclick = openLens;
 
+  // ---------- Ai: GitHub ডাউনলোড অংশ + ছবির raw লিংক + OCR প্রম্পট (Supabase) → একটি প্রম্পট কপি ----------
+  function rawImageUrl(im) {
+    const br = (cfg.branch || defaultBranch || 'main').split('/').map(encodeURIComponent).join('/');
+    return 'https://raw.githubusercontent.com/' + cfg.repo + '/refs/heads/' + br + '/' + epath(pagesDir() + '/' + im.name);
+  }
+  function buildAiPrompt(im) {
+    const head = [
+      '# UNIVERSAL MASTER PROMPT (v8.1): GitHub Public Image Fetch + Faithful OCR / Retyping, Any Language, Plain Text',
+      '',
+      '## ROLE',
+      'You are an expert at fetching public images from GitHub and an expert OCR transcriber for ANY language and script (Bangla, Arabic, Urdu, Persian, English etc.). You download the image first, then retype it with 100% fidelity.',
+      '',
+      '## TASK',
+      '1. Download the image from the provided GitHub URL.',
+      '2. If the URL is a `github.com/.../blob/...` link, you MUST convert it to `raw.githubusercontent.com` link first. Handle URL-encoded Bengali folder names correctly (keep %E0%A6... encoding).',
+      '3. Carefully read the downloaded image and retype ALL of the body content into clean, editable digital text. Do not summarize, translate, or correct.',
+      '',
+      'Input URL for this task:',
+      '`' + rawImageUrl(im) + '`'
+    ].join('\n');
+    return head + '\n\n' + (cfg.api1.prompt || API_DEF[1].prompt).trim() + '\n';
+  }
+  async function copyPlain(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+    try {
+      const t = document.createElement('textarea');
+      t.value = text; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(t); t.select(); t.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy'); t.remove(); return ok;
+    } catch (e) { return false; }
+  }
+  $('btnAiCopy').onclick = async () => {
+    if (cur < 0) { toast('কোনো ছবি খোলা নেই', true); return; }
+    const im = images[cur];
+    const ok = await copyPlain(buildAiPrompt(im));
+    if (!ok) { toast('কপি ব্যর্থ — ব্রাউজার ক্লিপবোর্ডে লিখতে দিচ্ছে না', true); return; }
+    toast(repoPrivate === true
+      ? 'প্রম্পট কপি হয়েছে (পেইজ ' + im.stem + ') — তবে রিপো প্রাইভেট, AI এই raw লিংক খুলতে পারবে না'
+      : 'AI প্রম্পট কপি হয়েছে (পেইজ ' + im.stem + ') — AI চ্যাটে পেস্ট করুন', repoPrivate === true, 4500);
+  };
+
   // ---------- পেইজ লোড ----------
   async function loadPage() {
     stopPlay();                         // পেইজ বদলালে শোনা বন্ধ
@@ -989,19 +1104,20 @@ window.__KP_READY = (async () => {
     closeLightbox();
     ta.value = ''; ta.disabled = true; ta.placeholder = ''; orig = ''; sha = null;
     img.removeAttribute('src');
-    $('imgMsg').textContent = 'ছবি লোড হচ্ছে…';
+    ldrShow(imgPct.has(im.name) ? imgPct.get(im.name) : 0);
     updateStatus();
 
     const imgP = getImage(im.name).then(url => new Promise(res => {
       if (my !== seq) return res();
+      if (ldr.on) ldrSet(100);
       img.onload = () => {
-        if (my === seq) { $('imgMsg').textContent = ''; if (pv) imgBox.scrollTo(pv.il || 0, pv.it || 0); }
+        if (my === seq) { setImgMsg(''); if (pv) imgBox.scrollTo(pv.il || 0, pv.it || 0); }
         res();
       };
-      img.onerror = () => { if (my === seq) $('imgMsg').textContent = 'ছবি দেখানো যায়নি'; res(); };
+      img.onerror = () => { if (my === seq) setImgMsg('ছবি দেখানো যায়নি'); res(); };
       img.src = url;
       imgBox.scrollTo(0, 0);
-    })).catch(e => { if (my === seq) $('imgMsg').textContent = 'ছবি লোড ব্যর্থ: ' + e.message; });
+    })).catch(e => { if (my === seq) setImgMsg('ছবি লোড ব্যর্থ: ' + e.message); });
 
     const txtP = (async () => {
       const r = await api('/contents/' + epath(textsDir() + '/' + im.stem + '.txt') + refQ());
@@ -1122,6 +1238,7 @@ window.__KP_READY = (async () => {
       if (!ri.ok) throw new Error(await errMsg(ri));
       const info = await ri.json();
       repoPrivate = !!info.private;
+      defaultBranch = info.default_branch || '';
       if (cfg.token && info.permissions && info.permissions.push === false)
         toast('এই টোকেনে রিপোতে লেখার অনুমতি নেই (Contents: Read and write দিন)', true, 6000);
       const br = cfg.branch || info.default_branch;
