@@ -15,7 +15,7 @@
 <body>
 <header class="top">
   <span class="logo-sm" data-ic="mark"></span>
-  <h2 id="ttl">কাজের তালিকা</h2>
+  <h2 id="ttl">টাস্কের তালিকা</h2>
   <span id="myCnt" class="cnt" hidden title="আপনার সম্পন্ন টাস্ক"><span data-ic="check"></span><b id="cntN">০</b><small>টি সম্পন্ন</small></span>
   <button id="bAdmin" class="sm" hidden><span data-ic="shield"></span>অ্যাডমিন</button>
   <button id="bOut" class="sm" hidden><span data-ic="logout"></span>লগআউট</button>
@@ -125,7 +125,7 @@ App.hydrateIcons();
 function tab(t){
   $('pTask').hidden=t!=='task'; $('pProf').hidden=t!=='prof';
   $('nTask').classList.toggle('on',t==='task'); $('nProf').classList.toggle('on',t==='prof');
-  $('ttl').textContent=t==='task'?'কাজের তালিকা':'প্রোফাইল';
+  $('ttl').textContent=t==='task'?'টাস্কের তালিকা':'প্রোফাইল';
 }
 $('nTask').onclick=()=>tab('task'); $('nProf').onclick=()=>{tab('prof');loadCount();};
 if(location.hash==='#prof')tab('prof');   // support.html থেকে ফিরলে প্রোফাইল ট্যাব খুলুক
