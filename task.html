@@ -67,7 +67,14 @@
   <div class="acts"><button id="dCancel">বন্ধ</button><button id="dSave" class="primary">সংরক্ষণ</button></div>
 </dialog>
 
-<style>.logo-sm{display:flex;width:30px;height:30px;border-radius:9px;background:var(--pri);color:var(--pri-fg);align-items:center;justify-content:center}.logo-sm .i{width:18px;height:18px}</style>
+<style>
+/* কিতাবের কার্ড: বাটনের ডিফল্ট nowrap/center বাতিল, লেখা বাম-সারিবদ্ধ ও র‍্যাপ হবে */
+.book{align-items:stretch;justify-content:flex-start;white-space:normal;text-align:left;font-weight:400;gap:0}
+.book .cv{width:100%}
+.book .bt{width:100%;padding:12px 13px 14px;display:flex;flex-direction:column;gap:5px}
+.book .bt b{font-size:14.5px;line-height:1.45;font-weight:600;overflow-wrap:anywhere}
+.book .bt small{display:block;font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.logo-sm{display:flex;width:30px;height:30px;border-radius:9px;background:var(--pri);color:var(--pri-fg);align-items:center;justify-content:center}.logo-sm .i{width:18px;height:18px}</style>
 <script src="common.js"></script>
 <script>
 (async () => {
@@ -77,8 +84,8 @@ const PM={bkash:'বিকাশ',nagad:'নগদ'};
 
 // Admin: top field to reach admin.html. User: bottom navigation (task / profile).
 $('bOut').onclick=$('bOut2').onclick=()=>App.logout();
+$('nav').hidden=false;   // টাস্ক / প্রোফাইল নেভিগেশন সবার জন্য
 if(isAdmin){ $('bAdmin').hidden=false; $('bOut').hidden=false; $('bAdmin').onclick=()=>location.href='admin.html'; $('pRole').textContent='অ্যাডমিন'; }
-else { $('nav').hidden=false; }
 App.hydrateIcons();
 
 function tab(t){
