@@ -146,7 +146,8 @@ document.getElementById('bBackForm').onclick = document.getElementById('bBackCha
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, set, onValue, onDisconnect, update, serverTimestamp }
+import { getDatabase, ref, push, onChildAdded, set, onValue, onDisconnect, update, serverTimestamp,
+  get, query, orderByChild, equalTo, limitToLast }
 from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -162,10 +163,32 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let myTicketId = localStorage.getItem("ticket_id");
-let myName = localStorage.getItem("ticket_name");
+// ===== ইউজার-ভিত্তিক টিকেট (ডাটা লিক ফিক্স) =====
+// আগে ticket_id / ticket_name সব ইউজারের জন্য একই localStorage key-তে থাকত, তাই এক অ্যাকাউন্টের
+// টিকেট অন্য অ্যাকাউন্টে খুলে যেত। এখন key-তে ইউজার আইডি আছে + টিকেটে uid থাকে + লোডের আগে মালিক যাচাই হয়।
+const me = await App.requireAuth();            // লগইন না থাকলে login.html-এ পাঠাবে
+const UID = String(me.id);
+const K_ID = 'ticket_id:' + UID;
+const K_NAME = 'ticket_name:' + UID;
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
+// পুরনো (সবার জন্য এক) key মুছে ফেলুন — মালিক অজানা, তাই কারো টিকেট দেখানো যাবে না
+lsDel('ticket_id'); lsDel('ticket_name');
+
+let myTicketId = lsGet(K_ID);
+let myName = lsGet(K_NAME);
 let ticketClosed = false;
 let currentTicketUnsub = null;
+let chatUnsubs = [];        // মেসেজ/স্ট্যাটাস লিসেনার
+let loadToken = 0;          // দ্রুত টিকেট বদলালে পুরনো লোড বাতিল করতে
+
+// ব্যাক বাটনে (bfcache) আগের ইউজারের পেইজ ফিরে এলে সেশন মিলিয়ে নিন
+window.addEventListener('pageshow', e => {
+  if (!e.persisted) return;
+  const s = App.session.get();
+  if (!s || String(s.id) !== UID) location.reload();
+});
 
 function toBanglaNum(n) {
   return n.toString().replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
@@ -186,7 +209,7 @@ function showScreen(id) {
 
 // Reset form for new ticket (with existing name)
 function resetFormForNewTicket() {
-  const savedName = localStorage.getItem("ticket_name");
+  const savedName = lsGet(K_NAME);
   const nameInput = document.getElementById('f-name');
   const nameGroup = document.getElementById('name-group');
   const subtitle = document.getElementById('form-subtitle');
@@ -197,9 +220,7 @@ function resetFormForNewTicket() {
     nameGroup.style.opacity = '0.8';
     subtitle.innerText = 'নতুন সমস্যার বিবরণ দিন';
   } else {
-    let sessName = '';
-    try { sessName = (window.App && App.session.get() && App.session.get().name) || ''; } catch (e) {}
-    nameInput.value = sessName;
+    nameInput.value = me.full_name || '';
     nameInput.readOnly = false;
     nameGroup.style.opacity = '1';
     subtitle.innerText = 'আপনার সমস্যা জানান, আমরা সাহায্য করব';
@@ -210,10 +231,13 @@ function resetFormForNewTicket() {
 
 // Clean up previous ticket listener
 function cleanupCurrentTicket() {
+  loadToken++;
   if (currentTicketUnsub) {
     currentTicketUnsub();
     currentTicketUnsub = null;
   }
+  chatUnsubs.forEach(u => { try { u(); } catch (e) {} });
+  chatUnsubs = [];
 }
 
 // Cleanup task when leaving chat or opening new ticket
@@ -223,12 +247,20 @@ function cleanupCurrentTask() {
   // We will clear it only when creating a brand new ticket from openTicket function
 }
 
-// যদি আগের টিকেট থাকে
-if (myTicketId) {
-  loadChat(myTicketId);
-} else {
-  resetFormForNewTicket();
+// এই ইউজারের টিকেট খুঁজে চ্যাট খুলুন (শুধু uid মিললেই)
+async function init() {
+  if (!myTicketId) {
+    // অন্য ডিভাইস/ব্রাউজারে লগইন করলে সার্ভার থেকে নিজের সর্বশেষ টিকেট খুঁজুন
+    try {
+      const snap = await get(query(ref(db, 'tickets'), orderByChild('uid'), equalTo(UID), limitToLast(1)));
+      snap.forEach(c => { myTicketId = c.key; });
+      if (myTicketId) lsSet(K_ID, myTicketId);
+    } catch (e) { /* রুল/নেটওয়ার্ক সমস্যা: ফর্মই দেখাবে */ }
+  }
+  if (myTicketId) loadChat(myTicketId);
+  else resetFormForNewTicket();
 }
+init();
 
 window.openTicket = async function() {
   let name = document.getElementById('f-name').value.trim();
@@ -236,7 +268,7 @@ window.openTicket = async function() {
   
   // যদি নাম readOnly থাকে এবং খালি থাকে
   if (!name) {
-    const savedName = localStorage.getItem("ticket_name");
+    const savedName = lsGet(K_NAME);
     if (savedName) {
       name = savedName;
       document.getElementById('f-name').value = savedName;
@@ -253,10 +285,12 @@ window.openTicket = async function() {
   
   // Clear old ticket id only when creating a new one to avoid conflicts
   if (myTicketId) {
-    localStorage.removeItem('ticket_id');
+    lsDel(K_ID);
   }
   
   const ticketRef = push(ref(db, 'tickets'), {
+    uid: UID,
+    phone: me.phone || '',
     name,
     desc,
     status: 'open',
@@ -266,8 +300,8 @@ window.openTicket = async function() {
 
   myTicketId = ticketRef.key;
   myName = name;
-  localStorage.setItem('ticket_id', myTicketId);
-  localStorage.setItem('ticket_name', myName);
+  lsSet(K_ID, myTicketId);
+  lsSet(K_NAME, myName);
 
   // প্রথম system message
   push(ref(db, `tickets/${myTicketId}/messages`), {
@@ -284,18 +318,30 @@ window.openNewTicket = function() {
   cleanupCurrentTask();
   // Do not clear localStorage name, keep it for prefilling
   // Only remove ticket_id because we are abandoning current chat
-  localStorage.removeItem('ticket_id');
+  lsDel(K_ID);
   myTicketId = null;
   showScreen('form-screen');
   resetFormForNewTicket();
 };
 
-function loadChat(ticketId) {
-  showScreen('chat-screen');
-  
-  // Clear container
+// টিকেট এই ইউজারের কিনা যাচাই না করে কোনো মেসেজই লোড/দেখানো হয় না
+async function loadChat(ticketId) {
+  cleanupCurrentTicket();
+  const token = loadToken;
   const container = document.getElementById('msg-container');
   container.innerHTML = '';
+  let first = null;
+  try { first = (await get(ref(db, `tickets/${ticketId}`))).val(); } catch (e) { first = null; }
+  if (token !== loadToken) return;             // এর মধ্যে অন্য টিকেট খোলা হয়েছে
+  if (!first || String(first.uid || '') !== UID) {
+    // টিকেট নেই, বা অন্য ইউজারের, বা পুরনো (uid ছাড়া) → ফর্ম দেখান
+    lsDel(K_ID);
+    myTicketId = null;
+    showScreen('form-screen');
+    resetFormForNewTicket();
+    return;
+  }
+  showScreen('chat-screen');
   const loadedKeys = new Set();
 
   // টিকেট ইনফো লোড
@@ -303,7 +349,7 @@ function loadChat(ticketId) {
     const t = snap.val();
     if (!t) {
       // Ticket deleted
-      localStorage.removeItem('ticket_id');
+      lsDel(K_ID);
       myTicketId = null;
       showScreen('form-screen');
       resetFormForNewTicket();
@@ -344,7 +390,7 @@ function loadChat(ticketId) {
     }
   });
 
-  onChildAdded(ref(db, `tickets/${ticketId}/messages`), snap => {
+  chatUnsubs.push(onChildAdded(ref(db, `tickets/${ticketId}/messages`), snap => {
     if (loadedKeys.has(snap.key)) return;
     loadedKeys.add(snap.key);
     const d = snap.val();
@@ -372,7 +418,7 @@ function loadChat(ticketId) {
 
     const div = document.createElement('div');
     div.className = `message ${isMe ? 'me' : 'other'}`;
-    div.innerHTML = `<div>${d.msg}</div>`;
+    div.innerHTML = `<div>${isMe ? App.esc(d.msg) : d.msg}</div>`;
 
     const infoDiv = document.createElement('div');
     infoDiv.className = `info-row ${isMe ? 'me-info' : 'other-info'}`;
@@ -389,10 +435,10 @@ function loadChat(ticketId) {
       update(ref(db, `tickets/${ticketId}/messages/${msgId}/seenBy`), { user: true });
     }
 
-    onValue(ref(db, `tickets/${ticketId}/messages/${msgId}/seenBy`), seenSnap => {
+    chatUnsubs.push(onValue(ref(db, `tickets/${ticketId}/messages/${msgId}/seenBy`), seenSnap => {
       const sd = seenSnap.val() || {};
       if (isMe && sd['admin']) seenSpan.style.display = 'block';
-    });
+    }));
 
     div.addEventListener('click', () => timeSpan.classList.toggle('show-info'));
 
@@ -402,7 +448,7 @@ function loadChat(ticketId) {
     wrapper.appendChild(infoDiv);
     container.appendChild(wrapper);
     container.scrollTop = container.scrollHeight;
-  });
+  }));
 
   // Send
   const input = document.getElementById('input');

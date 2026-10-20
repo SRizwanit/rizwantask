@@ -118,6 +118,12 @@ $('bWa').onclick=()=>{
   const m='আসসালামু আলাইকুম, আমি কিতাব প্রুফিং অ্যাপের ইউজার। নাম: '+(me.full_name||'-')+'। ফোন নাম্বার: '+(me.phone||'-')+'। আমার একটি সাহায্য প্রয়োজন।';
   window.open('https://wa.me/'+App.ADMIN_WA+'?text='+encodeURIComponent(m),'_blank','noopener');
 };
+// ব্যাক বাটনে (bfcache) আগের ইউজারের পেইজ ফিরে এলে সেশন মিলিয়ে নিন — অন্য অ্যাকাউন্টের তথ্য যেন না দেখা যায়
+window.addEventListener('pageshow',e=>{
+  if(!e.persisted)return;
+  const s=App.session.get();
+  if(!s||String(s.id)!==String(me.id))location.replace(s?'task.html':'login.html');
+});
 $('nav').hidden=false;   // টাস্ক / প্রোফাইল নেভিগেশন সবার জন্য
 if(isAdmin){ $('bAdmin').hidden=false; $('bOut').hidden=false; $('bAdmin').onclick=()=>location.href='admin.html'; $('pRole').textContent='অ্যাডমিন'; }
 App.hydrateIcons();
