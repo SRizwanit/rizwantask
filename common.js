@@ -6,14 +6,61 @@ const ADMIN_PHONE='01714656343', ADMIN_WA='8801714656343';
 const SK='kp_session_v1', DK='kp_device_v1';
 const enc=encodeURIComponent;
 
+/* ---- ইন্টারনেট নেই / ধীর নেট — স্পষ্ট বার্তা (পেইজের উপরে ছোট বার) ---- */
+const Net=(function(){
+  let bar=null,msg=null,btn=null,slowT=0,hideT=0,inflight=0,mode='';
+  function css(){
+    if(document.getElementById('netBarCss'))return;
+    const s=document.createElement('style');s.id='netBarCss';
+    s.textContent='#netBar{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 66px);transform:translateX(-50%);z-index:9999;display:none;align-items:center;gap:10px;max-width:92vw;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.45;color:#fff;background:#b91c1c;box-shadow:0 8px 24px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25)}'
+     +'#netBar.on{display:flex}#netBar.slow{background:#b45309}#netBar.ok{background:#15803d}'
+     +'#netBar button{flex:none;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.16);color:#fff;border-radius:99px;padding:3px 12px;font-size:12.5px;font-weight:600;cursor:pointer}#netBar button[hidden]{display:none}';
+    document.head.appendChild(s);
+  }
+  function ensure(){
+    if(bar&&document.body.contains(bar))return true;
+    if(!document.body)return false;
+    css();bar=document.createElement('div');bar.id='netBar';bar.setAttribute('role','status');bar.setAttribute('aria-live','polite');
+    msg=document.createElement('span');btn=document.createElement('button');btn.type='button';btn.textContent='আবার চেষ্টা';
+    btn.onclick=()=>{const ev=new CustomEvent('kp-retry',{cancelable:true});window.dispatchEvent(ev);
+      if(!ev.defaultPrevented&&!/view\.html/.test(location.pathname)&&navigator.onLine)location.reload();
+      else if(!navigator.onLine)toast('এখনো ইন্টারনেট নেই',true);};
+    bar.appendChild(msg);bar.appendChild(btn);document.body.appendChild(bar);return true;
+  }
+  function show(m,text,retry,auto){
+    if(!ensure()){document.addEventListener('DOMContentLoaded',()=>show(m,text,retry,auto),{once:true});return;}
+    clearTimeout(hideT);mode=m;msg.textContent=text;btn.hidden=!retry;bar.className='on '+m;
+    if(auto)hideT=setTimeout(hide,auto);
+  }
+  function hide(){if(bar)bar.className='';mode='';}
+  function offline(){show('off','ইন্টারনেট নেই — সংযোগ ফিরলে নিজে থেকেই আবার চেষ্টা হবে।',true);}
+  window.addEventListener('offline',offline);
+  window.addEventListener('online',()=>{show('ok','ইন্টারনেট ফিরেছে',false,2500);try{window.dispatchEvent(new Event('kp-online'));}catch(e){}});
+  if(!navigator.onLine){if(document.body)offline();else document.addEventListener('DOMContentLoaded',offline,{once:true});}
+  return{
+    start(){inflight++;clearTimeout(slowT);slowT=setTimeout(()=>{if(inflight>0&&navigator.onLine&&mode!=='off')show('slow','নেট ধীর — একটু অপেক্ষা করুন…',false);},9000);return 1;},
+    end(){inflight=Math.max(0,inflight-1);if(!inflight){clearTimeout(slowT);if(mode==='slow')hide();}},
+    fail(){if(!navigator.onLine)offline();else show('off','সংযোগ পাওয়া যাচ্ছে না — নেট দুর্বল হতে পারে।',true,7000);},
+    hide
+  };
+})();
+
 async function req(method,path,body,prefer){
   const h={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY};
   if(body!==undefined)h['Content-Type']='application/json';
   if(prefer)h.Prefer=prefer;
-  const r=await fetch(SB_URL+'/rest/v1/'+path,{method,headers:h,body:body!==undefined?JSON.stringify(body):undefined,cache:'no-store'});
-  const t=await r.text();
-  if(!r.ok)throw new Error(method+' '+path.split('?')[0]+' failed: '+r.status+' '+t);
-  return t?JSON.parse(t):[];
+  const tk=Net.start();
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/'+path,{method,headers:h,body:body!==undefined?JSON.stringify(body):undefined,cache:'no-store'});
+    const t=await r.text();
+    if(!r.ok)throw new Error(method+' '+path.split('?')[0]+' failed: '+r.status+' '+t);
+    return t?JSON.parse(t):[];
+  }catch(e){
+    if(e instanceof TypeError||/Failed to fetch|NetworkError|Load failed|network/i.test(String(e&&e.message))&&!/failed: \d{3}/.test(String(e&&e.message))){
+      Net.fail(); throw new Error('ইন্টারনেট সংযোগ নেই বা খুব দুর্বল — আবার চেষ্টা করুন');
+    }
+    throw e;
+  }finally{Net.end(tk);}
 }
 const sb={
   get:p=>req('GET',p),
@@ -161,7 +208,8 @@ const TK='kp_theme_v1';
 const theme={
   get(){try{const t=localStorage.getItem(TK);return t==='dark'||t==='light'?t:'auto';}catch(e){return'auto';}},
   set(t){try{if(t==='auto')localStorage.removeItem(TK);else localStorage.setItem(TK,t);}catch(e){}
-    if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);},
+    if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
+    if(window.__kpTC)window.__kpTC();},
   next(){return({auto:'light',light:'dark',dark:'auto'})[theme.get()];},
   label(t){return({auto:'সিস্টেম অনুযায়ী',light:'লাইট মোড',dark:'ডার্ক মোড'})[t||theme.get()];}
 };
@@ -208,15 +256,27 @@ const ICONS={
  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
  info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
- send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>'
+ send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+ zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+ play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+ target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+ download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'
 };
 const LOGO='<svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 61V35a23 23 0 0 1 46 0V61M4 61H60" stroke-width="2" style="stroke:#f2d27a"/><g transform="translate(32 25)" style="stroke:#f2d27a" stroke-width="1.2"><circle r="1.4"/><ellipse rx="1.7" ry="5"/><ellipse rx="1.7" ry="5" transform="rotate(45)"/><ellipse rx="1.7" ry="5" transform="rotate(90)"/><ellipse rx="1.7" ry="5" transform="rotate(135)"/></g><path d="M32 52V38M32 38C28 35.5 22 35.5 17 37V51C22 49.5 28 49.5 32 52M32 38C36 35.5 42 35.5 47 37V51C42 49.5 36 49.5 32 52" stroke-width="2.2" style="stroke:#f3fff9"/><path d="M19 57C25 56.5 29 55 32 52C35 55 39 56.5 45 57" stroke-width="1.8" style="stroke:#f2d27a"/><path d="M36.5 44l2.8 2.8 4.6-5.8" stroke-width="2.2" style="stroke:#f2d27a"/></g><path d="M35 1.4A5.5 5.5 0 1 0 35 10.6A4.6 4.6 0 1 1 35 1.4z" style="fill:#f2d27a"/><path class="mk-sp" d="M40.50 3.30 L41.18 5.07 L43.07 5.17 L41.59 6.36 L42.09 8.18 L40.50 7.15 L38.91 8.18 L39.41 6.36 L37.93 5.17 L39.82 5.07z" style="fill:#fff7d6"/></svg>';
 const ic=(n,c)=>n==='mark'?LOGO:'<svg class="i '+(c||'')+'" viewBox="0 0 24 24" aria-hidden="true">'+(ICONS[n]||'')+'</svg>';
 function hydrateIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(e=>{e.innerHTML=ic(e.dataset.ic,e.dataset.cls)+(e.innerHTML||'');e.removeAttribute('data-ic');});mountTheme(root);}
+/* ---- হোম স্ক্রিনে ইনস্টল (PWA) ---- */
+const Install={
+  standalone:()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true,
+  ios:()=>/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream,
+  can:()=>!!window.__kpInstallEv,
+  async prompt(){const ev=window.__kpInstallEv;if(!ev)return 'none';ev.prompt();let r={};try{r=await ev.userChoice;}catch(e){}window.__kpInstallEv=null;return r.outcome||'done';}
+};
+
 const $=id=>document.getElementById(id);
 function btnBusy(b,on){if(b)b.disabled=!!on;}
 
 window.App={sb,Phone,isAdminPhone,hashPin,newSalt,verifyPin,hasPin,deviceId,deviceEmpty,findUserByPhone,findUserByDevice,requestOtp,verifyOtp,
   session,logout,requireAuth,esc,toast,ic,hydrateIcons,$,btnBusy,ADMIN_PHONE,ADMIN_WA,
-  log,bn,r2,money,fmtD,fmtDT,startOfDay,rateOf,summarize,getAll,DEF_RATE,DEF_MIN,theme,mountTheme,enc};
+  log,bn,r2,money,fmtD,fmtDT,startOfDay,rateOf,summarize,getAll,DEF_RATE,DEF_MIN,theme,mountTheme,enc,Net,Install};
 })();

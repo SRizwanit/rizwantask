@@ -12,6 +12,11 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0b5f4c">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RizwanTask">
 </head>
 <body>
 <header class="top">
@@ -55,6 +60,8 @@
       <button id="bOut2" class="danger block" style="margin-top:10px"><span data-ic="logout"></span>লগআউট</button>
       <button id="bNotices" class="help block" style="margin-top:10px"><span data-ic="bell"></span>নোটিশ ও ঘোষণা</button>
       <button id="bGuide" class="help block" style="margin-top:10px"><span data-ic="info"></span>ব্যবহারের গাইড</button>
+      <button id="bInstall" class="help block" style="margin-top:10px" hidden><span data-ic="download"></span>হোম স্ক্রিনে ইনস্টল করুন</button>
+      <p class="hint" id="installHint" style="margin:6px 0 0;text-align:left" hidden></p>
       <button id="bTicket" class="help block" style="margin-top:10px"><span data-ic="ticket"></span>টিকেট খুলুন</button>
       <button id="bWa" class="help wa block" style="margin-top:10px"><span data-ic="whatsapp"></span>হোয়াটসঅ্যাপে যোগাযোগ করুন</button>
     </div>
@@ -161,6 +168,22 @@ $('bWa').onclick=()=>{
 };
 // ব্যবহারের গাইড: টাস্ক পেইজের অ্যানিমেটেড গাইড খোলে
 $('bGuide').onclick=()=>location.href='task.html#guide';
+// হোম স্ক্রিনে ইনস্টল (PWA): ব্রাউজার সমর্থন করলে এক চাপে; iPhone-এ নির্দেশনা; ইতিমধ্যে ইনস্টল থাকলে বাটন লুকানো
+function paintInstall(){
+  const b=$('bInstall'), h=$('installHint');
+  if(App.Install.standalone()){ b.hidden=true; h.hidden=true; return; }
+  if(App.Install.can()){ b.hidden=false; h.hidden=true; }
+  else if(App.Install.ios()){ b.hidden=false; h.hidden=true; }
+  else { b.hidden=true; h.hidden=true; }
+}
+$('bInstall').onclick=async()=>{
+  if(App.Install.can()){ const r=await App.Install.prompt(); if(r==='accepted')App.toast('অ্যাপ ইনস্টল হচ্ছে…'); paintInstall(); return; }
+  if(App.Install.ios()){ const h=$('installHint'); h.textContent='Safari-তে নিচের শেয়ার (⬆) বাটনে চাপ দিয়ে "Add to Home Screen" বেছে নিন।'; h.hidden=false; return; }
+  App.toast('এই ব্রাউজারে ইনস্টল সমর্থিত নয় — ব্রাউজারের মেনু থেকে "Add to Home screen" দিন',true);
+};
+window.addEventListener('kp-installable',paintInstall); window.addEventListener('kp-installed',paintInstall);
+paintInstall();
+window.addEventListener('kp-retry',e=>{ e.preventDefault(); location.reload(); });
 // নেভিগেশন: টাস্ক / পেমেন্ট / র‍্যাংক
 $('nTask').onclick=()=>location.href='task.html#task';
 $('nPay').onclick=()=>location.href='task.html#pay';

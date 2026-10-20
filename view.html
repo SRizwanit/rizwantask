@@ -224,6 +224,11 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0b5f4c">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RizwanTask">
 </head>
 <body>
 
@@ -1245,6 +1250,8 @@ window.__KP_READY = (async () => {
     cur = i; cfg.last = images[i].stem;
     if (!(restoreOnce && cfg.view && cfg.view.stem === cfg.last)) cfg.view = null;
     saveCfg();
+    // task.html-এর "চালিয়ে যান" বাটনের জন্য: শেষ কিতাব ও পেইজ মনে রাখি (শুধু এই ডিভাইসে)
+    try { localStorage.setItem('kp_resume_v1_' + ME, JSON.stringify({b: BOOK_ID, s: cfg.last, t: Date.now()})); } catch (e) {}
     sel.value = i;
     await loadPage();
   }

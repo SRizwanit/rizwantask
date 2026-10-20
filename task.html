@@ -12,6 +12,11 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0b5f4c">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RizwanTask">
 </head>
 <body>
 <header class="top">
@@ -27,6 +32,7 @@
 <main class="wrap wide" style="padding-bottom:90px">
   <!-- TASK pane -->
   <section id="pTask">
+    <div id="dash"></div>
     <div class="row" style="margin-bottom:14px">
       <div style="position:relative;flex:1;min-width:200px">
         <input id="q" type="search" placeholder="কিতাব বা লেখকের নাম খুঁজুন" style="padding-left:36px">
@@ -35,7 +41,7 @@
       <button id="bReload" class="sm" title="রিফ্রেশ"><span data-ic="refresh"></span></button>
     </div>
     <div id="noticeBar"></div>
-    <div class="spin on" id="spin"></div>
+    <div class="spin" id="spin"></div>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>কোনো কিতাব পাওয়া যায়নি</div>
   </section>
@@ -44,7 +50,8 @@
   <!-- PAYMENT pane -->
   <section id="pPay" hidden style="max-width:560px;margin:0 auto">
     <div id="warnBox"></div>
-    <div class="tiles" id="payTiles"></div>
+    <div class="tiles" id="payTiles"><div class="tile sk"><span class="skl w60"></span><span class="skl w80"></span></div><div class="tile sk"><span class="skl w60"></span><span class="skl w80"></span></div><div class="tile sk"><span class="skl w60"></span><span class="skl w80"></span></div><div class="tile sk"><span class="skl w60"></span><span class="skl w80"></span></div></div>
+    <div id="fcBox"></div>
     <div class="card" style="margin-bottom:14px">
       <div class="row"><b style="flex:1">পেমেন্ট রিকোয়েস্ট</b><span class="badge gold" id="rateInfo"></span></div>
       <p class="hint" id="reqHint" style="margin:8px 0 12px"></p>
@@ -89,6 +96,17 @@
 </nav>
 
 
+<!-- দৈনিক লক্ষ্য -->
+<dialog id="glDlg">
+  <h3>দৈনিক লক্ষ্য</h3>
+  <p class="hint" style="margin:0 0 10px">প্রতিদিন কত পেইজ প্রুফড করতে চান? (এই ডিভাইসে সংরক্ষিত থাকবে)</p>
+  <div class="chips" id="glChips"><button type="button" data-g="10"></button><button type="button" data-g="20"></button><button type="button" data-g="30"></button><button type="button" data-g="50"></button></div>
+  <label class="f" for="glIn">অথবা নিজের সংখ্যা</label>
+  <input id="glIn" type="number" inputmode="numeric" min="1" max="1000" step="1">
+  <div class="err" id="glErr"></div>
+  <div class="acts"><button id="glCancel">বন্ধ</button><button id="glSave" class="primary">সংরক্ষণ</button></div>
+</dialog>
+
 <!-- পেমেন্ট রিকোয়েস্ট -->
 <dialog id="rqDlg">
   <h3>পেমেন্ট রিকোয়েস্ট</h3>
@@ -132,6 +150,49 @@ header.top h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:now
 .cnt .i{width:14px;height:14px;color:#f2d27a;stroke-width:2.6}
 .cnt b{font-size:15px;font-weight:700;color:#f7e2a0;font-variant-numeric:tabular-nums}
 .cnt small{font-size:11.5px;opacity:.9}
+.book .cv{position:relative}
+/* কার্ডে: সম্পন্ন পেইজ / বাকি পেইজ */
+.book .bt small.pn{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px;margin-top:5px;font-size:12.5px;color:var(--muted)}
+.book .pn .dn{color:var(--ok);font-weight:700}
+.book .pn .rm{color:var(--gold,#c9972b);font-weight:700}
+.book .pn .rm.u{font-weight:500;color:var(--muted)}
+.book .pn .sl{color:var(--muted)}
+.book .lastb{position:absolute;top:8px;left:8px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;background:linear-gradient(135deg,#a8761f,#f2d27a);color:#4a3200;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+/* লোডিং স্কেলিটন */
+.skl{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--panel2) 25%,var(--panel) 50%,var(--panel2) 75%);background-size:220% 100%;animation:kpSk 1.25s linear infinite}
+.skl.w50{width:50%}.skl.w60{width:60%}.skl.w80{width:80%}.skl.bar{height:8px;border-radius:99px;margin-top:8px}
+.book.sk{cursor:default;pointer-events:none}.book.sk:hover{transform:none;box-shadow:none}
+.book.sk .cv{background:linear-gradient(90deg,var(--panel2) 25%,var(--panel) 50%,var(--panel2) 75%);background-size:220% 100%;animation:kpSk 1.25s linear infinite}
+.book.sk .bt{gap:9px}
+.tile.sk{gap:10px;min-height:66px;justify-content:center}
+@keyframes kpSk{to{background-position:-220% 0}}
+@media(prefers-reduced-motion:reduce){.skl,.book.sk .cv{animation:none}}
+/* উপরের কার্ড: দৈনিক লক্ষ্য, টানা দিন, ব্যাজ, চালিয়ে যান */
+#dash:empty{display:none}
+#dash .card.dash{margin-bottom:14px;padding:14px}
+.drow{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
+.dgoal,.dstreak{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);min-width:0;text-align:left}
+.dgoal{cursor:pointer}
+.dgoal:active{background:var(--panel2)}
+.dl{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted)}
+.dl .i{width:14px;height:14px}
+.dgoal .dl{color:var(--pri)}.dstreak .dl{color:var(--gold,#c9972b)}
+.dv{font-size:13px;color:var(--muted)}.dv b{font-size:22px;color:var(--fg);font-variant-numeric:tabular-nums}
+.dh{font-size:11.5px;color:var(--muted);line-height:1.4}
+.dgoal.hit{border-color:var(--ok)}.dgoal.hit .dh{color:var(--ok);font-weight:600}
+.dbg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.dbg span{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:600;border:1px dashed var(--line);color:var(--muted);opacity:.7}
+.dbg span .i{width:12px;height:12px}
+.dbg span.on{opacity:1;border:1px solid rgba(217,171,67,.7);background:linear-gradient(135deg,rgba(168,118,31,.18),rgba(242,210,122,.3));color:var(--gold,#a8761f)}
+#dResume{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;white-space:normal;text-align:center}
+#dResume .i{width:16px;height:16px;flex:none}
+/* আয়ের পূর্বাভাস */
+.fc{margin-bottom:14px;padding:14px 16px}
+.fc .fr{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.fc .fr:last-of-type{border-bottom:0}
+.fc .fr b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.fc .fr b.up{color:var(--ok)}
+.fc .fh{margin-top:6px}
 .book .bp{margin-top:6px}
 .book .rt{font-size:11.5px;color:var(--gold,#c9972b);font-weight:600}
 nav.bottom button{font-size:11.5px}
@@ -142,7 +203,7 @@ nav.bottom[hidden]{display:none!important}
 /* হেডারে প্রোফাইল আইকন (নতুন নোটিশ থাকলে ব্যাজ) */
 #bProf{position:relative;flex:none}
 #bProf .i{width:18px;height:18px}
-#bProf .tbadge{position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:#e5484d;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center;border:2px solid #0b5f4c;box-sizing:content-box}
+#bProf .tbadge{position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:#e5484d;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center;border:2px solid var(--hdr-edge,#0b5f4c);box-sizing:content-box}
 @media(max-width:480px){header.top #bOut .lbl{display:none}}
 /* গাইড ডায়ালগ: অ্যানিমেটেড ভেক্টর স্টেজ + ধাপের তালিকা */
 #gDlg{width:min(94vw,460px);max-width:none;max-height:94vh;overflow:auto}
@@ -160,7 +221,7 @@ nav.bottom[hidden]{display:none!important}
 const {$,esc,toast,Phone,bn,money,fmtD,fmtDT,enc}=App;
 let me=await App.requireAuth(), isAdmin=App.isAdminPhone(me.phone), books=[];
 const PM={bkash:'বিকাশ',nagad:'নগদ'};
-let S={}, booksById={}, bookCounts={}, myProofs=[], myPays=[], sum=null;
+let S={}, booksById={}, bookCounts={}, myProofs=[], myPays=[], sum=null, proofsReady=false;
 
 // Admin: top field to reach admin.html. User: bottom navigation (task / pay / rank / profile).
 $('bOut').onclick=()=>{App.log('logout','');setTimeout(()=>App.logout(),150);};
@@ -228,6 +289,9 @@ async function loadCount(){
 }
 // view.html থেকে ফিরে এলে বা ট্যাবে ফিরলে সংখ্যা নতুন করে আনুন
 const refreshAll=()=>{ loadCount(); loadCounts(); loadMoney(); loadNotices(); };
+const retryAll=()=>{ if(!books.length)load(); else refreshAll(); };
+window.addEventListener('kp-retry',e=>{ e.preventDefault(); retryAll(); });
+window.addEventListener('kp-online',retryAll);
 window.addEventListener('pageshow',e=>{ if(e.persisted)refreshAll(); });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible')refreshAll(); });
 
@@ -253,8 +317,8 @@ async function loadMoney(){
     if(!books.length){ try{ books=await App.sb.get('books?select=*&order=created_at.desc'); booksById=Object.fromEntries(books.map(b=>[String(b.id),b])); }catch(e){} }
     myProofs=await fetchMine();
     try{ myPays=await App.getAll('payments?user_id=eq.'+enc(me.id)+'&order=created_at.desc'); }catch(e){ myPays=[]; }
-    sum=App.summarize(myProofs,booksById,S,myPays);
-    renderMoney(); renderBooks();
+    sum=App.summarize(myProofs,booksById,S,myPays); proofsReady=true;
+    renderMoney(); renderBooks(); goalToast();
   }catch(e){ /* নেটওয়ার্ক/টেবিল সমস্যা: আগের তথ্য থাকুক */ }
   finally{ moneyBusy=false; if(moneyAgain){moneyAgain=false;} }
 }
@@ -273,6 +337,23 @@ function renderMoney(){
     '<div class="tile"><span class="tn">'+money(s.requested)+'</span><span class="tl">রিকোয়েস্টে আছে (অপেক্ষমাণ)</span></div>'+
     '<div class="tile"><span class="tn">'+bn(s.pending)+'</span><span class="tl">রিভিউ বাকি পেইজ ('+money(s.pendingAmt)+')</span></div>'+
     '<div class="tile"><span class="tn">'+bn(s.correction)+'</span><span class="tl">সংশোধন দরকার</span></div>';
+  // আয়ের পূর্বাভাস: রিভিউ বাকি পেইজ অনুমোদিত হলে কত যোগ হবে
+  {
+    const reviewedN=s.approved+s.correction, apr=reviewedN>=3?s.approved/reviewedN:null, dr=rateOf(null);
+    const allEarn=App.r2(s.earned+s.pendingAmt), allAvail=App.r2(s.available+s.pendingAmt);
+    let h='<div class="card fc"><b>আয়ের পূর্বাভাস</b>';
+    if(s.pending>0){
+      h+='<div class="fr"><span>রিভিউ বাকি '+bn(s.pending)+' পেইজ সব অনুমোদিত হলে যোগ হবে</span><b class="up">≈ +'+money(s.pendingAmt)+'</b></div>'
+        +'<div class="fr"><span>তখন মোট আয় হবে</span><b>≈ '+money(allEarn)+'</b></div>'
+        +'<div class="fr"><span>তখন উত্তোলনযোগ্য হবে</span><b>≈ '+money(allAvail)+'</b></div>';
+      if(apr!=null&&apr<1)h+='<div class="fr"><span>আপনার অনুমোদনের হার '+bn(Math.round(apr*100))+'% — সেই হিসাবে যোগ হবে</span><b>≈ +'+money(s.pendingAmt*apr)+'</b></div>';
+      h+='<p class="hint fh">'+(s.available>=min?'এখনই রিকোয়েস্ট করার মতো টাকা আছে।':allAvail>=min?'রিভিউ হয়ে গেলে ন্যূনতম পেমেন্ট ('+money(min)+') ছুঁয়ে রিকোয়েস্ট করতে পারবেন।':'ন্যূনতম পেমেন্ট ('+money(min)+') ছুঁতে আরও ≈ '+bn(Math.ceil((min-allAvail)/dr))+' পেইজ প্রুফ করতে হবে।')+' অ্যাডমিন অনুমোদন না দেওয়া পর্যন্ত এটি শুধু আনুমানিক হিসাব।</p>';
+    }else{
+      h+='<p class="hint" style="margin:8px 0 0">এখন রিভিউ বাকি কোনো পেইজ নেই। আরও পেইজ প্রুফড করলে অনুমোদিত হওয়ার পর প্রতি পেইজে ≈ '+rateTxt(dr)+' যোগ হবে'
+        +(s.available<min?'; ন্যূনতম পেমেন্ট ('+money(min)+') ছুঁতে আরও ≈ '+bn(Math.ceil((min-s.available)/dr))+' পেইজ দরকার':'')+'।</p>';
+    }
+    $('fcBox').innerHTML=h+'</div>';
+  }
   // রিকোয়েস্ট বাটন
   const hasReq=myPays.some(x=>x.status==='requested');
   const ok=s.available>=min&&s.available>0;
@@ -331,6 +412,72 @@ $('rqSend').onclick=async()=>{
   finally{ btn.disabled=false; }
 };
 
+// ================= লক্ষ্য, টানা দিন, ব্যাজ ও "চালিয়ে যান" =================
+const RK='kp_resume_v1_'+me.id, GK='kp_goal_v1_'+me.id;
+const BADGES=[[3,'শুরু'],[7,'এক সপ্তাহ'],[15,'পনেরো দিন'],[30,'এক মাস'],[60,'দুই মাস'],[100,'শতক']];
+function getResume(){ try{ const r=JSON.parse(localStorage.getItem(RK)||'null'); return r&&r.b!=null?r:null; }catch(e){ return null; } }
+let goal=(()=>{ try{ const g=Math.floor(Number(localStorage.getItem(GK))); return g>0?g:20; }catch(e){ return 20; } })();
+const dayKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};
+function streakInfo(){
+  const days=new Set(), t0=App.startOfDay().getTime(); let today=0;
+  myProofs.forEach(p=>{ const t=p.created_at?new Date(p.created_at).getTime():0; if(!t)return; days.add(dayKey(t)); if(t>=t0)today++; });
+  const nowK=dayKey(Date.now()), doneToday=days.has(nowK);
+  let cur=0; const d=new Date(); d.setHours(12,0,0,0); if(!doneToday)d.setDate(d.getDate()-1);
+  while(days.has(dayKey(d))){ cur++; d.setDate(d.getDate()-1); }
+  const nums=[...days].map(k=>{const [y,m,dd]=k.split('-').map(Number);return Date.UTC(y,m-1,dd)/864e5;}).sort((a,b)=>a-b);
+  let best=0,run=0,prev=null; nums.forEach(n=>{ run=(prev!=null&&n===prev+1)?run+1:1; prev=n; if(run>best)best=run; });
+  return {today,cur,best,doneToday};
+}
+function renderDash(){
+  const el=$('dash'); if(!el)return;
+  let rb=null, rStem='', rs=getResume();
+  if(rs&&booksById[String(rs.b)]){ rb=booksById[String(rs.b)]; rStem=rs.s||''; }
+  else if(myProofs.length&&myProofs[0].created_at&&booksById[String(myProofs[0].book_id)]){ rb=booksById[String(myProofs[0].book_id)]; }   // এই ডিভাইসে রেকর্ড না থাকলে সর্বশেষ প্রুফড কিতাব
+  const hasStat=proofsReady&&(!myProofs.length||myProofs[0].created_at!==undefined);
+  if(!hasStat&&!rb){ el.innerHTML=''; return; }
+  let h='<div class="card dash">';
+  if(hasStat){
+    const s=streakInfo(), left=Math.max(0,goal-s.today), hit=s.today>=goal, pct=Math.min(100,s.today/goal*100);
+    const next=BADGES.find(b=>b[0]>s.best);
+    h+='<div class="drow">'
+      +'<div class="dgoal'+(hit?' hit':'')+'" id="dGoal" role="button" tabindex="0" title="লক্ষ্য বদলাতে চাপুন">'
+        +'<span class="dl">'+App.ic('target')+'আজকের লক্ষ্য</span>'
+        +'<span class="dv"><b>'+bn(s.today)+'</b> / '+bn(goal)+' পেইজ</span>'
+        +'<span class="pg"><i style="width:'+pct+'%"></i></span>'
+        +'<span class="dh">'+(hit?'লক্ষ্য পূরণ হয়েছে ✓':'আর '+bn(left)+' পেইজ বাকি')+' • বদলাতে চাপুন</span></div>'
+      +'<div class="dstreak"><span class="dl">'+App.ic('zap')+'টানা কাজ</span>'
+        +'<span class="dv"><b>'+bn(s.cur)+'</b> দিন</span>'
+        +'<span class="dh">'+(s.doneToday?'আজকের দিন গোনা হয়েছে':(s.cur?'আজ কাজ করলে '+bn(s.cur+1)+' দিন হবে':'আজ একটি পেইজ করলেই শুরু'))+' • সেরা '+bn(s.best)+' দিন</span></div></div>'
+      +'<div class="dbg">'+BADGES.map(b=>'<span class="'+(s.best>=b[0]?'on':'')+'" title="'+bn(b[0])+' দিন টানা">'+App.ic('trophy')+esc(b[1])+'</span>').join('')+'</div>'
+      +(next?'<p class="hint" style="margin:8px 0 0">পরের ব্যাজ "'+esc(next[1])+'": টানা '+bn(next[0])+' দিন (সেরা রেকর্ড থেকে আরও '+bn(next[0]-s.best)+' দিন)।</p>':'');
+  }
+  if(rb) h+='<button type="button" class="primary block" id="dResume">'+App.ic('play')+'<span>চালিয়ে যান — '+esc(rb.name)+(rStem?' • পেইজ '+esc(rStem):'')+'</span></button>';
+  el.innerHTML=h+'</div>';
+}
+$('dash').onclick=e=>{
+  if(e.target.closest('#dGoal')){ $('glIn').value=goal; $('glErr').textContent=''; $('glDlg').showModal(); return; }
+  if(e.target.closest('#dResume')){
+    const rs=getResume(), ok=rs&&booksById[String(rs.b)];
+    const bid=ok?rs.b:(myProofs[0]&&myProofs[0].book_id);
+    if(bid==null)return;
+    location.href='view.html?book='+encodeURIComponent(bid)+(ok&&rs.s?'&page='+encodeURIComponent(rs.s):'');
+  }
+};
+$('dash').onkeydown=e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.id==='dGoal'){ e.preventDefault(); e.target.click(); } };
+$('glChips').querySelectorAll('button').forEach(b=>{ b.textContent=bn(b.dataset.g); b.onclick=()=>{ $('glIn').value=b.dataset.g; }; });
+$('glCancel').onclick=()=>$('glDlg').close();
+$('glSave').onclick=()=>{
+  const g=Math.floor(Number($('glIn').value));
+  if(!Number.isFinite(g)||g<1||g>1000){ $('glErr').textContent='১ থেকে ১০০০-এর মধ্যে একটি সংখ্যা দিন'; return; }
+  goal=g; try{localStorage.setItem(GK,String(g));}catch(e){}
+  $('glDlg').close(); renderDash(); toast('দৈনিক লক্ষ্য: '+bn(g)+' পেইজ');
+};
+function goalToast(){
+  if(!proofsReady||!myProofs.length||myProofs[0].created_at===undefined)return;
+  const s=streakInfo(), k='kp_goalhit_v1_'+me.id+'_'+dayKey(Date.now());
+  if(s.today>=goal){ try{ if(localStorage.getItem(k))return; localStorage.setItem(k,'1'); }catch(e){} toast('মাশাআল্লাহ! আজকের লক্ষ্য পূরণ হয়েছে ('+bn(s.today)+'/'+bn(goal)+' পেইজ)'); }
+}
+
 // ================= কিতাব তালিকা + অগ্রগতির বার =================
 async function loadCounts(){
   try{
@@ -341,28 +488,34 @@ async function loadCounts(){
     renderBooks();
   }catch(e){ /* টেবিল নেই: বার ছাড়াই চলবে */ }
 }
+const SKEL='<div class="book sk"><div class="cv"></div><div class="bt"><span class="skl w80"></span><span class="skl w50"></span><span class="skl bar"></span><span class="skl w60"></span></div></div>'.repeat(4);
 function renderBooks(){
   const q=$('q').value.trim().toLowerCase();
   const list=books.filter(b=>!q||(b.name||'').toLowerCase().includes(q)||(b.author||'').toLowerCase().includes(q));
-  $('empty').hidden=list.length>0;
+  $('empty').textContent='কোনো কিতাব পাওয়া যায়নি'; $('empty').hidden=list.length>0;
+  const rs=getResume();
   $('grid').innerHTML=list.map(b=>{
     const id=String(b.id), done=bookCounts[id]||0, total=Number(b.total_pages)||0, mine=sum&&sum.byBook[id]?sum.byBook[id].n:0;
+    const rem=Math.max(0,total-done), pct=total>0?Math.min(100,done/total*100):0;
+    // সম্পন্ন পেইজ / বাকি পেইজ (মোট পেইজ জানা না থাকলে "বাকি অজানা")
     const prog=total>0
-      ?'<div class="pg"><i style="width:'+Math.min(100,done/total*100)+'%"></i></div><small>'+bn(done)+'/'+bn(total)+' পেইজ • বাকি '+bn(Math.max(0,total-done))+'</small>'
-      :(done?'<small>'+bn(done)+' পেইজ সম্পন্ন</small>':'');
+      ?'<div class="pg"><i style="width:'+pct+'%"></i></div><small class="pn"><span class="dn">'+bn(done)+' সম্পন্ন</span><span class="sl">/</span><span class="rm">'+bn(rem)+' বাকি</span></small>'
+      :(done?'<small class="pn"><span class="dn">'+bn(done)+' সম্পন্ন</span><span class="sl">/</span><span class="rm u">বাকি অজানা</span></small>':'');
+    const last=rs&&String(rs.b)===id?'<span class="lastb">শেষ কাজ</span>':'';
     return `<button class="book" data-id="${esc(b.id)}">
-    <div class="cv">${b.cover_url?`<img src="${esc(b.cover_url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{innerHTML:App.ic('book')}))">`:App.ic('book')}</div>
+    <div class="cv">${last}${b.cover_url?`<img src="${esc(b.cover_url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{innerHTML:App.ic('book')}))">`:App.ic('book')}</div>
     <div class="bt"><b>${esc(b.name)}</b><small>${esc(b.author||'')}</small>
       <div class="bp">${prog}</div>
       <span class="rt">রেট ${rateTxt(rateOf(b))}/পেইজ${mine?' • আমার '+bn(mine):''}</span></div></button>`;}).join('');
+  renderDash();
 }
-$('grid').onclick=e=>{const b=e.target.closest('.book');if(b)location.href='view.html?book='+encodeURIComponent(b.dataset.id);};
+$('grid').onclick=e=>{const b=e.target.closest('.book');if(b&&b.dataset.id)location.href='view.html?book='+encodeURIComponent(b.dataset.id);};
 $('q').oninput=renderBooks;
 
 async function load(){
-  $('spin').classList.add('on');
+  if(!books.length){ $('grid').innerHTML=SKEL; $('empty').hidden=true; } else $('spin').classList.add('on');
   try{ books=await App.sb.get('books?select=*&order=created_at.desc'); booksById=Object.fromEntries(books.map(b=>[String(b.id),b])); renderBooks(); }
-  catch(e){ toast('কিতাব লোড হয়নি: '+e.message,true); }
+  catch(e){ toast('কিতাব লোড হয়নি: '+e.message,true); if(!books.length){ $('grid').innerHTML=''; $('empty').textContent='কিতাব লোড হয়নি — নেট দেখে রিফ্রেশ চাপুন'; $('empty').hidden=false; } }
   finally{ $('spin').classList.remove('on'); }
   loadCounts(); loadMoney();
 }
@@ -624,6 +777,39 @@ function sceneEarn(){
   }};
 }
 
+/* ---------- ভেক্টর দৃশ্য: দৈনিক লক্ষ্য, টানা দিন ও চালিয়ে যান ---------- */
+function sceneGoal(){
+  const svg='<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" '+FONT+'>'
+   +'<rect width="400" height="200" fill="#e8f4ef"/><g id="gR">'
+   +'<g id="gg0"><rect x="22" y="16" width="176" height="92" rx="14" fill="#fff" stroke="#cfe3dc"/>'
+   +'<text x="38" y="40" font-size="12" font-weight="700" fill="#0b5f4c">আজকের লক্ষ্য</text>'
+   +'<text id="gNum" x="38" y="74" font-size="28" font-weight="700" fill="#0b5f4c">০</text><text x="72" y="74" font-size="14" fill="#6b7280">/ ২০ পেইজ</text>'
+   +'<rect x="38" y="86" width="144" height="8" rx="4" fill="#dfeae6"/><rect id="gBar" x="38" y="86" width="0" height="8" rx="4" fill="#16a583"/></g>'
+   +'<g id="gg1"><rect x="212" y="16" width="166" height="92" rx="14" fill="#fff" stroke="#cfe3dc"/>'
+   +'<text x="228" y="40" font-size="12" font-weight="700" fill="#a8761f">টানা কাজ</text>'
+   +'<text id="gStr" x="228" y="74" font-size="28" font-weight="700" fill="#a8761f">০</text><text x="258" y="74" font-size="14" fill="#6b7280">দিন</text>'
+   +[0,1,2].map(i=>'<circle id="gb'+i+'" cx="'+(236+i*28)+'" cy="92" r="7" fill="#dfeae6"/>').join('')+'</g>'
+   +'<g id="gg2"><rect x="22" y="124" width="356" height="52" rx="26" fill="#0b5f4c"/><path d="M118 142l14 8-14 8z" fill="#f7e2a0"/>'
+   +'<text x="214" y="150.5" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="#f7e2a0">চালিয়ে যান</text></g>'
+   +touchSvg(18)+'</g></svg>';
+  const dur=180;
+  return {svg,dur,mount:q=>{
+    const R=q('gR'),bar=q('gBar'),num=q('gNum'),str=q('gStr'),g2=q('gg2');
+    return f=>{
+      const ph=f<56?0:f<112?1:2, op=fadeIO(f,dur);
+      const n=Math.round(interpolate(f,[6,50],[0,14],E.out));
+      bar.setAttribute('width',interpolate(f,[6,50],[0,144*14/20],E.out)); num.textContent=bd(n);
+      str.textContent=bd(Math.round(interpolate(f,[58,90],[0,7],E.out)));
+      for(let i=0;i<3;i++)q('gb'+i).setAttribute('fill',f>74+i*10?'#f2d27a':'#dfeae6');
+      const pop=1+.04*Math.max(0,spring(f-114,{damping:8,stiffness:170}));
+      tf(g2,200*(1-pop),150*(1-pop),pop);
+      touch(q,f,{from:[350,196],to:[250,150],t0:112,t1:136,tp:140,r:18},op);
+      R.setAttribute('opacity',op);
+      return ph;
+    };
+  }};
+}
+
 /* ---------- ভেক্টর দৃশ্য ৪: র‍্যাংক, নোটিশ, টিকেট, প্রোফাইল ---------- */
 function sceneCommunity(){
   const CX=[50,150,250,350], LB=['র‍্যাংক','নোটিশ','টিকেট','প্রোফাইল'];
@@ -673,15 +859,15 @@ function playScene(sc,stage,lis){
 
 // ================= প্রথমবারের গাইড (ধাপে ধাপে, অ্যানিমেটেড) =================
 const GUIDE=[
-  {tag:'স্বাগতম',t:'আসসালামু আলাইকুম, স্বাগতম!',d:'এই অ্যাপে কিতাবের পেইজ দেখে ভুল শুধরে প্রুফ করবেন। কাজের বিনিময়ে প্রতি অনুমোদিত পেইজে নির্দিষ্ট রেটে আয় হবে।',subs:[],sc:sceneWelcome},
-  {tag:'শুরুতে',t:'কিতাব বেছে নিন',d:'"টাস্ক" ট্যাবে কিতাবের কার্ডে চাপ দিন। প্রতিটি কার্ডে রেট ও অগ্রগতির বার (কত পেইজ হলো, কত বাকি) দেখা যায়।',subs:[],sc:sceneBook},
+  {tag:'স্বাগতম',t:'আসসালামু আলাইকুম, স্বাগতম!',d:'এই অ্যাপে কিতাবের পেইজ এ আই কে দিয়ে টেক্সট করিয়ে, সে টেক্সট দেখে ভুল শুধরে প্রুফ করবেন। কাজের বিনিময়ে প্রতি অনুমোদিত পেইজে নির্দিষ্ট রেটে আয় হবে।',subs:[],sc:sceneWelcome},
+  {tag:'শুরুতে',t:'কিতাব বেছে নিন',d:'কিতাবের কার্ডে চাপ দিন। প্রতিটি কার্ডে রেট ও অগ্রগতির বার (কত পেইজ হলো, কত বাকি) দেখা যায়।',subs:[],sc:sceneBook},
   {tag:'ধাপ ১',t:'ছবি ডাউনলোড করে প্রম্পট কপি করুন',d:'পেইজ খুললে উপরের টুলবারে ছবি ডাউনলোডের বোতাম ও তার পাশে এআই (✦) চিহ্ন পাবেন।',
     subs:['টাস্ক থেকে ডাউনলোড বোতামে চাপ দিয়ে পেইজের ছবিটি ফোনে নামান।','পাশের এআই (✦) চিহ্নে ক্লিক করুন — প্রম্পট কপি হয়ে যাবে।'],
     sc:()=>shotScene('a',400,124,[{x:12,y:10,w:52,h:36},{x:133,y:10,w:52,h:36}])},
-  {tag:'ধাপ ২',t:'ছবি ও প্রম্পট Meta AI-কে দিন',d:'meta.ai খুলে ডাউনলোড করা ছবি এবং কপি করা প্রম্পট একসাথে পাঠান।',
+  {tag:'ধাপ ২',t:'ছবি ও প্রম্পট Meta AI বা ChatGPT-কে দিন',d:'meta.ai বা chatgpt.com খুলে ডাউনলোড করা ছবি এবং কপি করা প্রম্পট একসাথে পাঠান।',
     subs:['"+" চেপে ডাউনলোড করা ছবিটি যোগ করুন।','কপি করা প্রম্পট লেখার ঘরে পেস্ট করুন।','পাঠানোর তীর (↑) চাপুন — Meta AI ছবি থেকে টেক্সট বের করে দেবে।'],
     sc:()=>shotScene('b',680,245,[{x:37,y:150,w:60,h:60},{x:20,y:40,w:620,h:70},{x:585,y:152,w:56,h:56}])},
-  {tag:'ধাপ ৩',t:'AI-র দেওয়া টেক্সট কপি করুন',d:'Meta AI-র উত্তর শেষ হলে নিচের কপি আইকনে চাপ দিন। এতে পুরো টেক্সট একবারে কপি হবে।',
+  {tag:'ধাপ ৩',t:'AI-র দেওয়া টেক্সট কপি করুন',d:'Meta AI বা ChatGPT-এর উত্তর শেষ হলে নিচের কপি আইকনে চাপ দিন। এতে পুরো টেক্সট একবারে কপি হবে।',
     subs:['উত্তরের নিচের কপি আইকনে চাপ দিন, তারপর অ্যাপে ফিরে আসুন।'],
     sc:()=>shotScene('c',680,170,[{x:112,y:110,w:56,h:56}],{D:96})},
   {tag:'ধাপ ৪',t:'টেক্সট বক্সে হেডিং চালু করে পেস্ট করুন',d:'অ্যাপের পেইজে ফিরে টেক্সট বক্সে কপি করা টেক্সট বসান। পেইজে শিরোনাম (হেডিং) থাকলে টেক্সট বক্সে হেডিং চালু করে নিন।',
@@ -696,8 +882,11 @@ const GUIDE=[
   {tag:'ফলাফল',t:'আয় ও পেমেন্ট',d:'"পেমেন্ট" ট্যাবে মোট আয়, বাকি টাকা ও ইতিহাস দেখুন। আয় গোনা হয় শুধু অ্যাডমিন যে পেইজ অনুমোদিত করেছেন সেগুলোর।',
     subs:['"অনুমোদিত" পেইজ আপনার আয়ে যোগ হয়।','"সংশোধন দরকার" হলে ঠিক করে আবার "প্রুফড" চাপুন — ভুল পেইজে আয় গোনা হয় না।','নির্দিষ্ট পরিমাণ হলে "পেমেন্ট রিকোয়েস্ট" চেপে টাকা চাইতে পারবেন।'],
     sc:sceneEarn},
+  {tag:'নতুন',t:'লক্ষ্য, টানা দিন ও চালিয়ে যান',d:'টাস্ক ট্যাবের উপরের কার্ডে আজকের লক্ষ্য, টানা কাজের দিন ও ব্যাজ দেখা যায়। \"চালিয়ে যান\" বাটনে শেষ কাজের জায়গায় ফেরা যায়।',
+    subs:['লক্ষ্যের ঘরে চাপ দিয়ে দৈনিক লক্ষ্য (কত পেইজ) বদলান।','প্রতিদিন অন্তত একটি পেইজ প্রুফড করলে টানা দিন বাড়ে; ৩, ৭, ১৫, ৩০ দিনে ব্যাজ মেলে।','\"চালিয়ে যান\" চাপলে শেষ যে কিতাব ও পেইজে ছিলেন সেখানে সরাসরি খুলবে।'],
+    sc:sceneGoal},
   {tag:'সাহায্য',t:'লিডারবোর্ড, নোটিশ ও সাহায্য',d:'"র‍্যাংক" ট্যাবে সবার মধ্যে আপনার অবস্থান দেখুন। অ্যাডমিনের ঘোষণা ডায়ালগে আসবে। উপরের টুলবারের প্রোফাইল আইকনে আপনার সব তথ্য আছে।',
-    subs:['"র‍্যাংক" ট্যাবে আজ, এই সপ্তাহ ও সব সময়ের তালিকা দেখুন।','অ্যাডমিনের ঘোষণা ডায়ালগে আসবে; আগেরগুলো প্রোফাইলের "নোটিশ ও ঘোষণা"-তে।','সমস্যা হলে প্রোফাইল থেকে টিকেট খুলুন বা হোয়াটসঅ্যাপে যোগাযোগ করুন।','উপরের প্রোফাইল আইকনে মোবাইল/পেমেন্ট নাম্বার, থিম ও লগআউট।'],
+    subs:['"র‍্যাংক" ট্যাবে আজ, এই সপ্তাহ ও সব সময়ের তালিকা দেখুন।','অ্যাডমিনের ঘোষণা ডায়ালগে আসবে; আগেরগুলো প্রোফাইলের "নোটিশ ও ঘোষণা"-তে।','সমস্যা হলে প্রোফাইল থেকে টিকেট খুলুন বা হোয়াটসঅ্যাপে যোগাযোগ করুন।','উপরের প্রোফাইল আইকনে মোবাইল/পেমেন্ট নাম্বার, থিম, হোম স্ক্রিনে ইনস্টল ও লগআউট।'],
     sc:sceneCommunity}
 ];
 let gI=0;
