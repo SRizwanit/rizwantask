@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script src="theme-init.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover">
 <title>প্রোফাইল - কিতাব প্রুফিং</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -91,6 +91,32 @@
 </dialog>
 
 <style>
+/* রেসপন্সিভ ফিক্স: ডান দিকে অতিরিক্ত জায়গা/অনুভূমিক স্ক্রল বন্ধ, সব কিছু স্ক্রিনের প্রস্থে ফিট */
+html,body{width:100%;max-width:100%;overflow-x:hidden;overflow-x:clip}
+*,*::before,*::after{box-sizing:border-box}
+header.top{width:100%;max-width:100%;min-width:0;flex-wrap:nowrap}
+header.top>*{min-width:0}
+header.top h2{flex:1 1 0}
+header.top .cnt,header.top button,header.top .logo-sm{flex:none}
+main.wrap{width:100%;max-width:100%;overflow-x:hidden}
+#pProf{width:100%;max-width:440px;margin:0 auto}
+#pProf .card{width:100%;max-width:100%;overflow:hidden}
+#pProf .kv{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+#pProf .kv b{min-width:0;text-align:right;overflow-wrap:anywhere}
+#pProf .stat{max-width:100%;gap:12px;padding:12px 14px}
+#pProf .stT{flex:1 1 auto;min-width:0;text-align:center;overflow-wrap:anywhere}
+#pProf .seg{display:flex;width:100%;max-width:100%}
+#pProf .seg label{flex:1 1 0;min-width:0}
+#pProf .seg span{display:block;text-align:center;overflow:hidden;text-overflow:ellipsis}
+#pProf button.block{display:flex;width:100%;max-width:100%;white-space:normal;text-align:center;align-items:center;justify-content:center;gap:8px}
+nav.bottom{width:100%;max-width:100%}
+nav.bottom button{flex:1 1 0;min-width:0}
+dialog{max-width:calc(100vw - 24px)}
+@media(max-width:380px){
+  .stN{font-size:25px}.stL{font-size:14px}
+  .stat .stI{width:38px;height:38px}
+  header.top .cnt small{display:none}
+}
 .logo-sm{display:flex;width:30px;height:30px;border-radius:9px;background:var(--pri);color:var(--pri-fg);align-items:center;justify-content:center}.logo-sm .i{width:18px;height:18px}
 header.top h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:480px){header.top #bOut .lbl{display:none}}
